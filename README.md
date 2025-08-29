@@ -189,4 +189,86 @@
     loadQuestion(currentQ);
   </script>
 </body>
+</html>      if(timeLeft<=0) submitExam();
+    },1000);
+
+    // Load Question
+    function loadQuestion(index){
+      const q = questions[index];
+      const container = document.getElementById("question-container");
+      container.innerHTML = `<p><b>Q${index+1}. ${q.text}</b></p>`;
+      q.options.forEach((opt, idx)=>{
+        container.innerHTML += `<label><input type='radio' name='q-${q.id}' value='${idx}' ${answers[q.id]==idx?"checked":""} onchange='markAnswered(${q.id},${idx})'> ${opt}</label>`;
+      });
+
+      // Update navigation highlight
+      document.querySelectorAll(".nav-btn").forEach((btn,i)=>{
+        btn.classList.remove("current");
+        if(i===index) btn.classList.add("current");
+      });
+    }
+
+    // Mark Answered
+    function markAnswered(qid, ans){
+      answers[qid] = ans;
+      updateNav();
+    }
+
+    // Navigation buttons setup
+    function setupNav(){
+      const nav = document.getElementById("navigation");
+      nav.innerHTML = "";
+      questions.forEach((q,i)=>{
+        const btn = document.createElement("button");
+        btn.innerText = i+1;
+        btn.className = "nav-btn unsolved";
+        btn.onclick = ()=>{ currentQ=i; loadQuestion(i); };
+        nav.appendChild(btn);
+      });
+      updateNav();
+    }
+
+    // Update nav colors
+    function updateNav(){
+      questions.forEach((q,i)=>{
+        const btn = document.getElementById("navigation").children[i];
+        if(answers[q.id]!==undefined){
+          btn.className="nav-btn solved";
+        }else{
+          btn.className="nav-btn unsolved";
+        }
+        if(i===currentQ) btn.classList.add("current");
+      });
+    }
+
+    function nextQuestion(){
+      if(currentQ<questions.length-1){
+        currentQ++;
+        loadQuestion(currentQ);
+      } else {
+        alert("This was the last question!");
+      }
+    }
+
+    function submitExam(){
+      clearInterval(timerInterval);
+      document.getElementById("exam-screen").style.display="none";
+      document.getElementById("submit-screen").style.display="block";
+      document.getElementById("final-violations").innerText = "Violations: "+violations;
+    }
+
+    // Anti-cheat events
+    ["copy","paste","contextmenu"].forEach(evt=>{
+      document.addEventListener(evt,e=>{
+        e.preventDefault();
+        violations++;
+        document.getElementById("violations").innerText = "Violations: "+violations;
+      });
+    });
+
+    // Init
+    setupNav();
+    loadQuestion(currentQ);
+  </script>
+</body>
 </html>
