@@ -1,42 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Online Exam Panel</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Reasoning Test</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container" id="app">
-    <h1>Secure Online Exam</h1>
+  <div class="container">
+    <h1>Reasoning Exam</h1>
+    
+    <!-- Timer -->
+    <div id="timer">Time: 00:00</div>
 
-    <!-- Student Login -->
-    <div id="login-screen">
-      <input type="text" id="studentId" placeholder="Student ID" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="studentLogin()">Login</button>
+    <!-- Questions -->
+    <div id="exam-container">
+      <h2 id="questionText"></h2>
+      <div id="options"></div>
+      <button onclick="nextQuestion()">Next</button>
     </div>
 
-    <!-- Exam Screen -->
-    <div id="exam-screen" style="display:none;">
-      <video id="camera" autoplay muted playsinline></video>
-      <div class="exam-header">
-        <span id="timer">40:00</span>
-        <span id="violations">Violations: 0</span>
-      </div>
-      <div id="question-nav"></div>
-      <div id="question-container"></div>
-      <button onclick="submitExam()">Submit Exam</button>
-    </div>
+    <!-- Submit -->
+    <button id="submitBtn" onclick="submitExam()">Submit Test</button>
 
-    <!-- Submit Screen -->
-    <div id="submit-screen" style="display:none;">
-      <h2>Exam Submitted</h2>
-      <p>Your responses have been saved.</p>
-      <p id="final-violations"></p>
-    </div>
+    <!-- Result -->
+    <div id="result" style="display:none;"></div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="questions.js"></script>
+  <script src="exam.js"></script>
 </body>
 </html>
