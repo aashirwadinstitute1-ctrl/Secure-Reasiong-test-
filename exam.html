@@ -173,4 +173,67 @@
     }
   </script>
 </body>
+</html>    // Render Question
+    function renderQuestion(index) {
+      const q = questions[index];
+      currentIndex = index;
+      let html = `
+        <div class="question">
+          <p><b>Q${index+1}:</b> ${q.text}</p>
+          <label><input type="radio" name="q${index}" value="A" ${answers[index]==="A"?"checked":""}> ${q.options.A}</label><br>
+          <label><input type="radio" name="q${index}" value="B" ${answers[index]==="B"?"checked":""}> ${q.options.B}</label><br>
+          <label><input type="radio" name="q${index}" value="C" ${answers[index]==="C"?"checked":""}> ${q.options.C}</label><br>
+          <label><input type="radio" name="q${index}" value="D" ${answers[index]==="D"?"checked":""}> ${q.options.D}</label>
+        </div>
+      `;
+      document.getElementById("questionArea").innerHTML = html;
+      renderNav();
+    }
+
+    // Save Answer
+    function saveAnswer() {
+      const answer = document.querySelector(`input[name="q${currentIndex}"]:checked`);
+      if(answer) answers[currentIndex] = answer.value;
+    }
+
+    // Next Question
+    function nextQuestion() {
+      saveAnswer();
+      if(currentIndex < questions.length - 1) {
+        renderQuestion(currentIndex + 1);
+      } else {
+        alert("✅ All questions completed!");
+      }
+    }
+
+    // Render Navigation
+    function renderNav() {
+      const nav = document.getElementById("navButtons");
+      nav.innerHTML = "";
+      questions.forEach((_, i) => {
+        let cls = "red";
+        if(answers[i]) cls = "green";
+        if(i === currentIndex) cls = "current";
+        nav.innerHTML += `<span class="nav-btn ${cls}"> ${i+1} </span>`;
+      });
+    }
+
+    // Submit Exam
+    function submitExam() {
+      saveAnswer();
+      clearInterval(timer);
+      let score = 0;
+      questions.forEach((q, i) => {
+        if(answers[i] && answers[i] === q.correct) score++;
+      });
+      alert(`✅ Exam submitted!\nScore: ${score}/${questions.length}`);
+
+      const results = JSON.parse(localStorage.getItem("examResults")) || [];
+      results.push({ id: studentId, name: studentName, score });
+      localStorage.setItem("examResults", JSON.stringify(results));
+
+      document.getElementById("examBox").innerHTML = `<h2>Exam Completed</h2><p>Your score: ${score}/${questions.length}</p>`;
+    }
+  </script>
+</body>
 </html>
