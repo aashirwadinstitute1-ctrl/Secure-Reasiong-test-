@@ -7,27 +7,23 @@
   <style>
     body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f4f4; }
     header { background:#2563eb; color:#fff; padding:10px; text-align:center; font-size:20px; }
-    #cameraPreview { position:fixed; top:10px; right:10px; width:180px; height:130px; border:2px solid #2563eb; border-radius:8px; background:#000; }
+    #cameraPreview { position:fixed; top:10px; right:10px; width:140px; height:130px; border:2px solid #2563eb; border-radius:10px; background:#000; }
     #timer { font-size:18px; font-weight:bold; color:#d32f2f; text-align:center; margin:10px; }
-    #question-container { background:#fff; margin:20px auto; padding:20px; max-width:800px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); }
+    #question-container { background:#fff; margin:20px auto; padding:20px; max-width:800px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
     .question { font-size:18px; margin-bottom:15px; }
     .options label { display:block; margin-bottom:8px; cursor:pointer; }
-    #navigation { display:flex; flex-wrap:wrap; margin:20px auto; max-width:800px; }
-    .nav-btn { width:40px; height:40px; margin:5px; border:none; border-radius:50%; font-weight:bold; cursor:pointer; }
-    .nav-btn.red { background:#e57373; color:#fff; }
-    .nav-btn.green { background:#81c784; color:#fff; }
     #controls { text-align:center; margin:20px; }
-    #controls button { background:#2563eb; color:#fff; border:none; padding:10px 16px; margin:0 5px; border-radius:8px; cursor:pointer; font-size:16px; }
-    #submitBtn { background:#2563eb; color:#fff; border:none; padding:12px 20px; margin:20px auto; display:block; border-radius:8px; cursor:pointer; font-size:18px; }
+    #controls button { background:#2563eb; color:#fff; border:none; padding:10px 16px; margin:0 5px; border-radius:8px; cursor:pointer; }
+    #submitBtn { background:#2563eb; color:#fff; border:none; padding:12px 20px; margin:20px auto; display:block; border-radius:8px; cursor:pointer; }
     #result { text-align:center; font-size:20px; margin:20px; font-weight:bold; }
   </style>
 </head>
 <body>
   <header>Secure Online Exam</header>
-  
+
   <div id="cameraPreview"></div>
   <div id="timer">Time Left: 40:00</div>
-  
+
   <div id="question-container">
     <div id="question" class="question"></div>
     <div id="options" class="options"></div>
@@ -37,5 +33,53 @@
     </div>
   </div>
 
-  <div id="navigation"></div>
-  <button id="submitBtn">
+  <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
+  <div id="result"></div>
+
+  <script src="questions.js"></script>
+  <script>
+    let current = 0;
+    let answers = {};
+
+    function showQuestion(i) {
+      let q = questions[i];
+      document.getElementById("question").innerHTML = (i+1)+". "+q.question;
+      let opts = "";
+      q.options.forEach((opt,j)=>{
+        let checked = (answers[i] === opt) ? "checked" : "";
+        opts += `<label><input type="radio" name="q${i}" value="${opt}" ${checked}
+          onchange="answers[${i}]='${opt}'"> ${opt}</label>`;
+      });
+      document.getElementById("options").innerHTML = opts;
+    }
+
+    function nextQuestion() {
+      if (current < questions.length-1) {
+        current++;
+        showQuestion(current);
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        showQuestion(current);
+      }
+    }
+
+    function submitExam() {
+      let score = 0;
+      questions.forEach((q,i)=>{
+        if (answers[i] === q.correct) score++;
+      });
+      document.getElementById("result").innerHTML =
+        `<h2>Exam Finished!</h2><h2>Your Score: ${score} / ${questions.length}</h2>`;
+      document.getElementById("question-container").style.display="none";
+      document.getElementById("submitBtn").style.display="none";
+    }
+
+    // First question show
+    showQuestion(current);
+  </script>
+</body>
+</html>
