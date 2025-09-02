@@ -1,38 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Admin Panel - Secure Exam</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Admin Panel</h1>
-    <div id="admin-login">
-      <input type="text" id="adminUser" placeholder="Admin Username" />
-      <input type="password" id="adminPass" placeholder="Password" />
-      <button onclick="adminLogin()">Login</button>
-    </div>
+  <h1>Admin Panel</h1>
 
-    <div id="admin-dashboard" style="display:none;">
-      <h2>Manage Questions</h2>
-      <input type="text" id="qText" placeholder="Enter question" />
-      <input type="text" id="opt1" placeholder="Option 1" />
-      <input type="text" id="opt2" placeholder="Option 2" />
-      <input type="text" id="opt3" placeholder="Option 3" />
-      <input type="text" id="opt4" placeholder="Option 4" />
-      <input type="number" id="correct" placeholder="Correct Option (1-4)" />
-      <button onclick="addQuestion()">Add Question</button>
+  <!-- Student Management -->
+  <section>
+    <h2>Add Student</h2>
+    <input type="text" id="studentName" placeholder="Name">
+    <input type="text" id="studentId" placeholder="ID">
+    <input type="text" id="studentMobile" placeholder="Mobile">
+    <input type="text" id="studentPhoto" placeholder="Photo URL">
+    <button onclick="addStudent()">Add Student</button>
+    
+    <h3>Student List</h3>
+    <table id="studentTable">
+      <tr>
+        <th>Photo</th>
+        <th>Name</th>
+        <th>ID</th>
+        <th>Mobile</th>
+        <th>Action</th>
+      </tr>
+    </table>
+  </section>
 
-      <h2>All Questions</h2>
-      <ul id="questionList"></ul>
+  <!-- Exam Results -->
+  <section>
+    <h2>Exam Results</h2>
+    <table id="resultTable">
+      <tr>
+        <th>Student ID</th>
+        <th>Name</th>
+        <th>Score</th>
+      </tr>
+    </table>
+  </section>
 
-      <h2>Results</h2>
-      <div id="results"></div>
-    </div>
-  </div>
+  <!-- Question Management -->
+  <section>
+    <h2>Add Question</h2>
+    <textarea id="questionText" placeholder="Enter Question"></textarea>
+    <input type="text" id="optionA" placeholder="Option A">
+    <input type="text" id="optionB" placeholder="Option B">
+    <input type="text" id="optionC" placeholder="Option C">
+    <input type="text" id="optionD" placeholder="Option D">
+    <input type="text" id="correctAnswer" placeholder="Correct Answer (A/B/C/D)">
+    <button onclick="addQuestion()">Add Question</button>
 
-  <script src="admin.js"></script>
+    <h3>Question List</h3>
+    <table id="questionTable">
+      <tr>
+        <th>ID</th>
+        <th>Question</th>
+        <th>Answer</th>
+        <th>Action</th>
+      </tr>
+    </table>
+  </section>
+
+  <script>
+    // Store data in localStorage
+    const students = JSON.parse(localStorage.getItem("students")) || [];
+    const results = JSON.parse(localStorage.getItem("results")) || [];
+    const questions = JSON.parse(localStorage.getItem("questions")) || [];
+
+    function saveData() {
+      localStorage.setItem("students", JSON.stringify(students));
+      localStorage.setItem("results", JSON.stringify(results));
+      localStorage.setItem("questions", JSON.stringify(questions));
+    }
+
+    // Student Management
+    function addStudent() {
+      const name = document.getElementById("studentName").value;
+      const id = document.getElementById("studentId").value;
+      const mobile = document.getElementById("studentMobile").value;
+      const photo = document.getElementById("studentPhoto").value;
+
+      students.push({ name, id, mobile, photo });
+      saveData();
+      renderStudents();
+    }
+
+    function deleteStudent(index) {
+      students.splice(index, 1);
+      saveData();
+      renderStudents();
+    }
+
+    function renderStudents() {
+      const table = document.getElementById("studentTable");
+      table.innerHTML = `
+        <tr>
+          <th>Photo</th>
+          <th>Name</th>
+          <th>ID</th>
+          <th>Mobile</th>
+          <th>Action</th>
+        </tr>`;
+      students.forEach((s, i) => {
+        table.innerHTML += `
+          <tr>
+            <td><img src="${s.photo}" alt="Photo"></td>
+            <td>${s.name}</td>
+            <td>${s.id}</td>
+            <td>${s.mobile}</td>
+            <td><button onclick="deleteStudent(${i})">Delete</button></td>
+          </tr>`;
+      });
+    }
+
+    // Exam Results
+    function renderResults() {
+      const table = document.getElementById("resultTable");
+      table.innerHTML = `
+        <tr>
+          <th>Student ID</th>
+          <th>Name</th>
+          <th>Score</th>
+        </tr>`;
+      results.forEach(r => {
+        table.innerHTML += `
+          <tr>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${r.score}</td>
+          </tr>`;
+      });
+    }
+
+    // Question Management
+    function addQuestion() {
+      const text = document.getElementById("questionText").value;
+      const a = document.getElementById("optionA").value;
+      const b = document.getElementById("optionB").value;
+      const c = document.getElementById("optionC").value;
+      const d = document.getElementById("optionD").value;
+      const correct = document.getElementById("correctAnswer").value.toUpperCase();
+
+      const id = questions.length + 1;
+      questions.push({ id, text, options: { a, b, c, d }, correct });
+      saveData();
+      renderQuestions();
+    }
+
+    function deleteQuestion(index) {
+      questions.splice(index, 1);
+      saveData();
+      renderQuestions();
+    }
+
+    function renderQuestions() {
+      const table = document.getElementById("questionTable");
+      table.innerHTML = `
+        <tr>
+          <th>ID</th>
+          <th>Question</th>
+          <th>Answer</th>
+          <th>Action</th>
+        </tr>`;
+      questions.forEach((q, i) => {
+        table.innerHTML += `
+          <tr>
+            <td>${q.id}</td>
+            <td>${q.text}</td>
+            <td>${q.correct}</td>
+            <td><button onclick="deleteQuestion(${i})">Delete</button></td>
+          </tr>`;
+      });
+    }
+
+    // Load data on page load
+    renderStudents();
+    renderResults();
+    renderQuestions();
+  </script>
 </body>
 </html>
