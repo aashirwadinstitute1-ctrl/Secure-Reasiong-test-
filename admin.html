@@ -4,55 +4,116 @@
   <meta charset="UTF-8">
   <title>Admin Panel</title>
   <style>
-    body { font-family: Arial; background:#f9fafb; padding:20px; }
-    h2 { color:#2563eb; }
-    table { border-collapse: collapse; width:100%; margin-top:20px; }
-    table, th, td { border:1px solid #ccc; }
-    th, td { padding:10px; text-align:left; }
-    .add-btn { background:#22c55e; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
-    .back-btn { background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { color: #007bff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    input, button { padding: 6px; margin: 5px; }
+    .logout { background: red; color: white; padding: 6px 12px; border: none; cursor: pointer; }
+    .add-btn { background: green; color: white; border: none; cursor: pointer; }
+    img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; }
   </style>
 </head>
 <body>
+
   <h2>Admin Panel</h2>
-  <button class="back-btn" onclick="window.location.href='index.html'">Logout</button>
+  <button class="logout" onclick="logout()">Logout</button>
 
-  <h3>Student Records</h3>
-  <form onsubmit="addStudent(event)">
-    <input type="text" id="sname" placeholder="Name" required>
-    <input type="text" id="sid" placeholder="ID" required>
-    <input type="text" id="mobile" placeholder="Mobile" required>
-    <input type="file" id="photo" accept="image/*" required>
-    <button class="add-btn">Add Student</button>
-  </form>
+  <h3>➕ Add Student</h3>
+  <input type="text" id="name" placeholder="Name">
+  <input type="text" id="id" placeholder="ID">
+  <input type="text" id="mobile" placeholder="Mobile">
+  <input type="file" id="photo">
+  <button class="add-btn" onclick="addStudent()">Add Student</button>
 
+  <h3>📚 Student Records</h3>
   <table>
     <thead>
-      <tr><th>Photo</th><th>Name</th><th>ID</th><th>Mobile</th></tr>
+      <tr>
+        <th>Photo</th>
+        <th>Name</th>
+        <th>ID</th>
+        <th>Mobile</th>
+        <th>Result</th>
+        <th>Upload Result</th>
+      </tr>
     </thead>
     <tbody id="studentTable"></tbody>
   </table>
 
-  <script>
-    function addStudent(e) {
-      e.preventDefault();
-      let name = document.getElementById("sname").value;
-      let id = document.getElementById("sid").value;
-      let mobile = document.getElementById("mobile").value;
-      let photo = document.getElementById("photo").files[0];
-      let reader = new FileReader();
-      reader.onload = function() {
-        let tr = `<tr>
-          <td><img src="${reader.result}" width="50"></td>
-          <td>${name}</td>
-          <td>${id}</td>
-          <td>${mobile}</td>
-        </tr>`;
-        document.getElementById("studentTable").innerHTML += tr;
-      }
-      reader.readAsDataURL(photo);
-      e.target.reset();
+<script>
+  // Load Students from LocalStorage
+  let students = JSON.parse(localStorage.getItem("students")) || [];
+
+  function renderTable() {
+    const table = document.getElementById("studentTable");
+    table.innerHTML = "";
+    students.forEach((stu, index) => {
+      table.innerHTML += `
+        <tr>
+          <td><img src="${stu.photo}" alt="photo"></td>
+          <td>${stu.name}</td>
+          <td>${stu.id}</td>
+          <td>${stu.mobile}</td>
+          <td>${stu.result || "Not Uploaded"}</td>
+          <td>
+            <input type="text" id="result-${index}" placeholder="Enter Result">
+            <button onclick="uploadResult(${index})">Save</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // Add Student
+  function addStudent() {
+    const name = document.getElementById("name").value;
+    const id = document.getElementById("id").value;
+    const mobile = document.getElementById("mobile").value;
+    const photoFile = document.getElementById("photo").files[0];
+
+    if (!name || !id || !mobile || !photoFile) {
+      alert("Please fill all fields!");
+      return;
     }
-  </script>
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const photo = e.target.result;
+      students.push({ name, id, mobile, photo });
+      localStorage.setItem("students", JSON.stringify(students));
+      renderTable();
+    };
+    reader.readAsDataURL(photoFile);
+
+    // Clear inputs
+    document.getElementById("name").value = "";
+    document.getElementById("id").value = "";
+    document.getElementById("mobile").value = "";
+    document.getElementById("photo").value = "";
+  }
+
+  // Upload Result
+  function uploadResult(index) {
+    const resultInput = document.getElementById(`result-${index}`).value;
+    if (!resultInput) {
+      alert("Enter result before saving!");
+      return;
+    }
+    students[index].result = resultInput;
+    localStorage.setItem("students", JSON.stringify(students));
+    renderTable();
+  }
+
+  // Logout
+  function logout() {
+    window.location.href = "index.html"; // apna login page
+  }
+
+  // Initial render
+  renderTable();
+</script>
+
 </body>
 </html>
