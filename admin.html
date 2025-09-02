@@ -6,13 +6,11 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h2 { color: #007bff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #f2f2f2; }
     input, button { padding: 6px; margin: 5px; }
-    .logout { background: red; color: white; padding: 6px 12px; border: none; cursor: pointer; }
-    .add-btn { background: green; color: white; border: none; cursor: pointer; }
-    img { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; }
+    .logout { background: red; color: white; border: none; padding: 6px 12px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -20,14 +18,13 @@
   <h2>Admin Panel</h2>
   <button class="logout" onclick="logout()">Logout</button>
 
-  <h3>➕ Add Student</h3>
+  <h3>📋 Student Records</h3>
   <input type="text" id="name" placeholder="Name">
   <input type="text" id="id" placeholder="ID">
   <input type="text" id="mobile" placeholder="Mobile">
   <input type="file" id="photo">
-  <button class="add-btn" onclick="addStudent()">Add Student</button>
+  <button onclick="addStudent()">Add Student</button>
 
-  <h3>📚 Student Records</h3>
   <table>
     <thead>
       <tr>
@@ -36,17 +33,41 @@
         <th>ID</th>
         <th>Mobile</th>
         <th>Result</th>
-        <th>Upload Result</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="studentTable"></tbody>
   </table>
 
 <script>
-  // Load Students from LocalStorage
   let students = JSON.parse(localStorage.getItem("students")) || [];
 
-  function renderTable() {
+  // Add Student
+  function addStudent() {
+    const name = document.getElementById("name").value.trim();
+    const id = document.getElementById("id").value.trim();
+    const mobile = document.getElementById("mobile").value.trim();
+    const photoFile = document.getElementById("photo").files[0];
+
+    if (!name || !id || !mobile || !photoFile) {
+      alert("Please fill all fields and select a photo");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const photo = e.target.result;
+
+      students.push({ name, id, mobile, photo, result: "" });
+      localStorage.setItem("students", JSON.stringify(students));
+      displayStudents();
+      clearForm();
+    };
+    reader.readAsDataURL(photoFile);
+  }
+
+  // Display Students
+  function displayStudents() {
     const table = document.getElementById("studentTable");
     table.innerHTML = "";
     students.forEach((stu, index) => {
@@ -58,52 +79,39 @@
           <td>${stu.mobile}</td>
           <td>${stu.result || "Not Uploaded"}</td>
           <td>
-            <input type="text" id="result-${index}" placeholder="Enter Result">
-            <button onclick="uploadResult(${index})">Save</button>
+            <button onclick="uploadResult(${index})">Upload Result</button>
+            <button onclick="deleteStudent(${index})">Delete</button>
           </td>
         </tr>
       `;
     });
   }
 
-  // Add Student
-  function addStudent() {
-    const name = document.getElementById("name").value;
-    const id = document.getElementById("id").value;
-    const mobile = document.getElementById("mobile").value;
-    const photoFile = document.getElementById("photo").files[0];
-
-    if (!name || !id || !mobile || !photoFile) {
-      alert("Please fill all fields!");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const photo = e.target.result;
-      students.push({ name, id, mobile, photo });
+  // Upload Result
+  function uploadResult(index) {
+    const res = prompt("Enter Result for " + students[index].name);
+    if (res !== null) {
+      students[index].result = res;
       localStorage.setItem("students", JSON.stringify(students));
-      renderTable();
-    };
-    reader.readAsDataURL(photoFile);
+      displayStudents();
+    }
+  }
 
-    // Clear inputs
+  // Delete Student
+  function deleteStudent(index) {
+    if (confirm("Are you sure?")) {
+      students.splice(index, 1);
+      localStorage.setItem("students", JSON.stringify(students));
+      displayStudents();
+    }
+  }
+
+  // Clear form
+  function clearForm() {
     document.getElementById("name").value = "";
     document.getElementById("id").value = "";
     document.getElementById("mobile").value = "";
     document.getElementById("photo").value = "";
-  }
-
-  // Upload Result
-  function uploadResult(index) {
-    const resultInput = document.getElementById(`result-${index}`).value;
-    if (!resultInput) {
-      alert("Enter result before saving!");
-      return;
-    }
-    students[index].result = resultInput;
-    localStorage.setItem("students", JSON.stringify(students));
-    renderTable();
   }
 
   // Logout
@@ -111,8 +119,8 @@
     window.location.href = "index.html"; // apna login page
   }
 
-  // Initial render
-  renderTable();
+  // Show data on load
+  displayStudents();
 </script>
 
 </body>
