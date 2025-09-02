@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: Arial; background:#f9fafb; padding:20px; }
+    h2 { color:#2563eb; }
+    table { border-collapse: collapse; width:100%; margin-top:20px; }
+    table, th, td { border:1px solid #ccc; }
+    th, td { padding:10px; text-align:left; }
+    .add-btn { background:#22c55e; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
+    .back-btn { background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <h2>Admin Panel</h2>
+  <button class="back-btn" onclick="window.location.href='index.html'">Logout</button>
+
+  <h3>Student Records</h3>
+  <form onsubmit="addStudent(event)">
+    <input type="text" id="sname" placeholder="Name" required>
+    <input type="text" id="sid" placeholder="ID" required>
+    <input type="text" id="mobile" placeholder="Mobile" required>
+    <input type="file" id="photo" accept="image/*" required>
+    <button class="add-btn">Add Student</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Photo</th><th>Name</th><th>ID</th><th>Mobile</th></tr>
+    </thead>
+    <tbody id="studentTable"></tbody>
+  </table>
+
+  <script>
+    function addStudent(e) {
+      e.preventDefault();
+      let name = document.getElementById("sname").value;
+      let id = document.getElementById("sid").value;
+      let mobile = document.getElementById("mobile").value;
+      let photo = document.getElementById("photo").files[0];
+      let reader = new FileReader();
+      reader.onload = function() {
+        let tr = `<tr>
+          <td><img src="${reader.result}" width="50"></td>
+          <td>${name}</td>
+          <td>${id}</td>
+          <td>${mobile}</td>
+        </tr>`;
+        document.getElementById("studentTable").innerHTML += tr;
+      }
+      reader.readAsDataURL(photo);
+      e.target.reset();
+    }
+  </script>
+</body>
+</html>
