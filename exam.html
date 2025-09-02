@@ -35,7 +35,9 @@
   <button id="submitBtn">Submit Exam</button>
   <div id="result"></div>
 
+  <!-- ✅ External Questions file include -->
   <script src="questions.js"></script>
+  
   <script>
     let currentQuestion = 0;
     let answers = {};
@@ -61,6 +63,13 @@
     function showQuestion(index) {
       let q = questions[index];
       document.getElementById("question").innerText = (index+1) + ". " + q.q;
+
+      // ✅ Agar question ke sath diagram diya ho
+      if (q.img) {
+        document.getElementById("question").innerHTML += 
+          `<br><img src="${q.img}" style="max-width:250px; margin-top:10px;">`;
+      }
+
       let opts = "";
       q.options.forEach(opt => {
         opts += `<label><input type="radio" name="option" value="${opt}" 
