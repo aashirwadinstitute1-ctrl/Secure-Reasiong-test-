@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Exam Panel</title>
+  <style>
+    body { font-family: Arial; margin:0; padding:0; background:#f9fafb; }
+    header { background:#2563eb; color:#fff; padding:10px; text-align:center; }
+    .camera { position:fixed; top:10px; right:10px; border:2px solid #2563eb; width:150px; height:110px; }
+    .container { padding:20px; }
+    .question-box { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.2); margin-bottom:20px; }
+    .options label { display:block; margin:5px 0; padding:5px; border:1px solid #ccc; border-radius:5px; cursor:pointer; }
+    .nav { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+    .nav button { width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; }
+    .nav .unsolved { background:#ef4444; color:white; }
+    .nav .solved { background:#22c55e; color:white; }
+    .timer { font-size:18px; font-weight:bold; color:#dc2626; margin-bottom:10px; }
+    .submit-btn { background:#2563eb; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Welcome, <span id="studentName"></span> | Secure Exam</h2>
+  </header>
+
+  <video id="camera" class="camera" autoplay muted></video>
+
+  <div class="container">
+    <div class="timer">Time Left: <span id="time">40:00</span></div>
+    <div id="question-container" class="question-box"></div>
+    <div class="nav" id="question-nav"></div>
+    <br>
+    <button class="submit-btn" onclick="submitExam()">Submit Exam</button>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "Q1: Alphabet test sample?", options: ["A", "B", "C", "D"] },
+      { q: "Q2: Calendar sample?", options: ["Jan", "Feb", "Mar", "Apr"] },
+      { q: "Q3: Clock sample?", options: ["12", "3", "6", "9"] },
+      // 👉 यहाँ आपके सारे 80 questions डालने हैं
+    ];
+
+    let current = 0;
+    let answers = Array(questions.length).fill(null);
+
+    const name = localStorage.getItem("studentName") || "Student";
+    document.getElementById("studentName").innerText = name;
+
+    function loadQuestion(i) {
+      current = i;
+      const q = questions[i];
+      let html = `<h3>${q.q}</h3>`;
+      q.options.forEach((opt, idx) => {
+        html += `<label><input type="radio" name="q${i}" value="${opt}" onchange="saveAnswer(${i},'${opt}')"> ${opt}</label>`;
+      });
+      document.getElementById("question-container").innerHTML = html;
+      renderNav();
+    }
+
+    function saveAnswer(i, ans) {
+      answers[i] = ans;
+      renderNav();
+    }
+
+    function renderNav() {
+      let navHtml = "";
+      for (let i = 0; i < questions.length; i++) {
+        let cls = answers[i] ? "solved" : "unsolved";
+        navHtml += `<button class="${cls}" onclick="loadQuestion(${i})">${i+1}</button>`;
+      }
+      document.getElementById("question-nav").innerHTML = navHtml;
+    }
+
+    function submitExam() {
+      alert("✅ Exam submitted successfully!");
+      window.location.href = "index.html";
+    }
+
+    // Timer
+    let totalTime = 40 * 60; 
+    const timerEl = document.getElementById("time");
+    setInterval(() => {
+      if (totalTime <= 0) { submitExam(); return; }
+      totalTime--;
+      let m = String(Math.floor(totalTime / 60)).padStart(2,'0');
+      let s = String(totalTime % 60).padStart(2,'0');
+      timerEl.textContent = `${m}:${s}`;
+    }, 1000);
+
+    // Camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { document.getElementById("camera").srcObject = stream; })
+      .catch(err => console.log("Camera error:", err));
+
+    // Init
+    loadQuestion(0);
+  </script>
+</body>
+</html>
