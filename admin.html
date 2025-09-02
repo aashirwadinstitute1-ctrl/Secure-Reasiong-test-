@@ -2,220 +2,248 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2, h3 { color: #2c3e50; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    table, th, td { border: 1px solid #ddd; }
-    th, td { padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
-    input, select, button { margin: 5px; padding: 6px; }
-    button { cursor: pointer; }
-    .logout { background: red; color: white; border: none; padding: 8px 12px; border-radius: 4px; }
+    body { font-family: Arial, sans-serif; margin: 14px; background:#f7f7fb; }
+    h2 { color:#111827; margin:6px 0 12px; }
+    .bar { display:flex; justify-content:space-between; align-items:center; }
+    .btn { background:#2563eb; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .btn.red { background:#ef4444; }
+    .btn.gray { background:#6b7280; }
+    .card { background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); padding:14px; margin:10px 0; }
+    input, select { padding:8px; border:1px solid #d1d5db; border-radius:8px; margin:4px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size:14px; }
+    th { background:#f3f4f6; }
+    img.thumb { width: 52px; height:52px; object-fit:cover; border-radius:50%; }
+    .row-actions button { margin-right:6px; }
   </style>
 </head>
 <body>
-  <h2>Admin Panel</h2>
-  <button class="logout" onclick="logout()">Logout</button>
 
-  <!-- Student Records Section -->
-  <h3>Student Records</h3>
-  <div>
-    <input type="text" id="studentName" placeholder="Name">
-    <input type="text" id="studentId" placeholder="ID">
-    <input type="text" id="studentMobile" placeholder="Mobile">
-    <input type="file" id="studentPhoto">
-    <button onclick="addStudent()">Add Student</button>
+  <div class="bar">
+    <h2>Admin Panel</h2>
+    <button class="btn gray" onclick="logout()">Logout</button>
   </div>
 
-  <table id="studentTable">
-    <tr>
-      <th>Photo</th>
-      <th>Name</th>
-      <th>ID</th>
-      <th>Mobile</th>
-      <th>Result</th>
-      <th>Action</th>
-    </tr>
-  </table>
+  <!-- ================= Students ================= -->
+  <div class="card">
+    <h3>📋 Student Records</h3>
+    <div>
+      <input type="text" id="stName" placeholder="Name">
+      <input type="text" id="stId" placeholder="ID">
+      <input type="text" id="stMobile" placeholder="Mobile">
+      <input type="file" id="stPhoto" accept="image/*">
+      <button class="btn" onclick="addStudent()">Add Student</button>
+    </div>
 
-  <!-- Questions Management Section -->
-  <h3>Questions Management</h3>
-  <div>
-    <input type="text" id="questionInput" placeholder="Enter Question" />
-    <input type="text" id="option1" placeholder="Option 1" />
-    <input type="text" id="option2" placeholder="Option 2" />
-    <input type="text" id="option3" placeholder="Option 3" />
-    <input type="text" id="option4" placeholder="Option 4" />
-    <select id="correctAnswer">
-      <option value="1">Option 1</option>
-      <option value="2">Option 2</option>
-      <option value="3">Option 3</option>
-      <option value="4">Option 4</option>
-    </select>
-    <button onclick="addQuestion()">Add Question</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Photo</th><th>Name</th><th>ID</th><th>Mobile</th><th>Result</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
   </div>
 
-  <table id="questionsTable">
-    <tr>
-      <th>Question</th>
-      <th>Options</th>
-      <th>Correct Answer</th>
-      <th>Action</th>
-    </tr>
-  </table>
+  <!-- ================= Questions ================= -->
+  <div class="card">
+    <div class="bar">
+      <h3>❓ Manage Questions</h3>
+      <div>
+        <button class="btn" onclick="exportQuestions()">Export JSON</button>
+        <button class="btn red" onclick="resetToDefault()">Reset to Default (from questions.js)</button>
+      </div>
+    </div>
+
+    <div>
+      <input type="text" id="qText" placeholder="Enter Question" style="width:60%">
+      <input type="text" id="opt1" placeholder="Option 1">
+      <input type="text" id="opt2" placeholder="Option 2">
+      <input type="text" id="opt3" placeholder="Option 3">
+      <input type="text" id="opt4" placeholder="Option 4">
+      <select id="correct">
+        <option value="">Correct</option>
+        <option value="1">Option 1</option>
+        <option value="2">Option 2</option>
+        <option value="3">Option 3</option>
+        <option value="4">Option 4</option>
+      </select>
+      <input type="text" id="imgUrl" placeholder="Image URL (optional)" style="width:220px">
+      <button class="btn" onclick="addQuestion()">Add Question</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Question</th><th>Options</th><th>Correct</th><th>Image</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="qTable"></tbody>
+    </table>
+  </div>
+
+  <!-- bring your original 80 questions -->
+  <script src="questions.js"></script>
 
   <script>
-    // -------- Student Management --------
-    function loadStudents() {
-      let students = JSON.parse(localStorage.getItem("students")) || [];
-      const table = document.getElementById("studentTable");
-      table.innerHTML = `
-        <tr>
-          <th>Photo</th>
-          <th>Name</th>
-          <th>ID</th>
-          <th>Mobile</th>
-          <th>Result</th>
-          <th>Action</th>
-        </tr>`;
-      students.forEach((s, index) => {
-        let row = table.insertRow();
-        row.insertCell(0).innerHTML = `<img src="${s.photo}" width="50" height="50">`;
-        row.insertCell(1).innerText = s.name;
-        row.insertCell(2).innerText = s.id;
-        row.insertCell(3).innerText = s.mobile;
-        row.insertCell(4).innerText = s.result || "Not Uploaded";
-        let actions = row.insertCell(5);
-        actions.innerHTML = `
-          <button onclick="uploadResult(${index})">Upload Result</button>
-          <button onclick="deleteStudent(${index})">Delete</button>`;
-      });
+    /* ========= Seed Questions from questions.js on first load ========= */
+    const defaultQuestions = (window.questions || []);
+    let qs = JSON.parse(localStorage.getItem('questions'));
+    if (!Array.isArray(qs) || !qs.length) {
+      // first time seed from questions.js
+      qs = defaultQuestions;
+      localStorage.setItem('questions', JSON.stringify(qs));
     }
 
-    function addStudent() {
-      const name = document.getElementById("studentName").value;
-      const id = document.getElementById("studentId").value;
-      const mobile = document.getElementById("studentMobile").value;
-      const photoInput = document.getElementById("studentPhoto");
+    /* ================= Students ================= */
+    let students = JSON.parse(localStorage.getItem('students')) || [];
 
-      if (!name || !id || !mobile || !photoInput.files[0]) {
-        alert("Please fill all fields");
-        return;
-      }
-
+    function addStudent(){
+      const name = document.getElementById('stName').value.trim();
+      const id = document.getElementById('stId').value.trim();
+      const mobile = document.getElementById('stMobile').value.trim();
+      const file = document.getElementById('stPhoto').files[0];
+      if (!name || !id || !mobile || !file){ alert('Fill all fields + select photo'); return; }
       const reader = new FileReader();
-      reader.onload = function (e) {
-        let students = JSON.parse(localStorage.getItem("students")) || [];
-        students.push({
-          name,
-          id,
-          mobile,
-          photo: e.target.result,
-          result: "Not Uploaded",
-        });
-        localStorage.setItem("students", JSON.stringify(students));
-        loadStudents();
+      reader.onload = e => {
+        students.push({ name, id, mobile, photo: e.target.result, result: '' });
+        localStorage.setItem('students', JSON.stringify(students));
+        renderStudents();
+        document.getElementById('stName').value = '';
+        document.getElementById('stId').value = '';
+        document.getElementById('stMobile').value = '';
+        document.getElementById('stPhoto').value = '';
       };
-      reader.readAsDataURL(photoInput.files[0]);
-
-      // clear input fields
-      document.getElementById("studentName").value = "";
-      document.getElementById("studentId").value = "";
-      document.getElementById("studentMobile").value = "";
-      document.getElementById("studentPhoto").value = "";
+      reader.readAsDataURL(file);
     }
 
-    function deleteStudent(index) {
-      let students = JSON.parse(localStorage.getItem("students")) || [];
-      students.splice(index, 1);
-      localStorage.setItem("students", JSON.stringify(students));
-      loadStudents();
+    function renderStudents(){
+      const tb = document.getElementById('studentTable'); tb.innerHTML='';
+      students.forEach((s, i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img class="thumb" src="${s.photo}"/></td>
+          <td>${s.name}</td>
+          <td>${s.id}</td>
+          <td>${s.mobile}</td>
+          <td>${s.result || 'Not Uploaded'}</td>
+          <td class="row-actions">
+            <button class="btn" onclick="uploadResult(${i})">Upload Result</button>
+            <button class="btn red" onclick="deleteStudent(${i})">Delete</button>
+          </td>`;
+        tb.appendChild(tr);
+      });
     }
-
-    function uploadResult(index) {
-      let students = JSON.parse(localStorage.getItem("students")) || [];
-      let result = prompt("Enter result for " + students[index].name);
-      if (result !== null) {
-        students[index].result = result;
-        localStorage.setItem("students", JSON.stringify(students));
-        loadStudents();
+    function uploadResult(i){
+      const r = prompt('Enter Result for '+students[i].name);
+      if (r !== null){
+        students[i].result = r;
+        localStorage.setItem('students', JSON.stringify(students));
+        renderStudents();
       }
     }
-
-    // -------- Questions Management --------
-    function addQuestion() {
-      const question = document.getElementById("questionInput").value;
-      const options = [
-        document.getElementById("option1").value,
-        document.getElementById("option2").value,
-        document.getElementById("option3").value,
-        document.getElementById("option4").value,
-      ];
-      const correct = document.getElementById("correctAnswer").value;
-
-      if (!question || options.some(opt => !opt)) {
-        alert("Please fill all fields");
-        return;
-      }
-
-      let questions = JSON.parse(localStorage.getItem("questions")) || [];
-      questions.push({ question, options, correct });
-      localStorage.setItem("questions", JSON.stringify(questions));
-
-      loadQuestions();
-
-      // clear input
-      document.getElementById("questionInput").value = "";
-      options.forEach((_, i) => document.getElementById("option" + (i + 1)).value = "");
+    function deleteStudent(i){
+      if (!confirm('Delete this student?')) return;
+      students.splice(i,1);
+      localStorage.setItem('students', JSON.stringify(students));
+      renderStudents();
     }
 
-    function loadQuestions() {
-      let questions = JSON.parse(localStorage.getItem("questions")) || [];
-      const table = document.getElementById("questionsTable");
-      table.innerHTML = `
-        <tr>
-          <th>Question</th>
-          <th>Options</th>
-          <th>Correct Answer</th>
-          <th>Action</th>
-        </tr>`;
-      
-      questions.forEach((q, index) => {
-        let row = table.insertRow();
-        row.insertCell(0).innerText = q.question;
-        row.insertCell(1).innerText = q.options.join(", ");
-        row.insertCell(2).innerText = "Option " + q.correct;
-        let actionCell = row.insertCell(3);
-        let btn = document.createElement("button");
-        btn.innerText = "Delete";
-        btn.onclick = function() {
-          deleteQuestion(index);
-        };
-        actionCell.appendChild(btn);
+    /* ================= Questions ================= */
+    function addQuestion(){
+      const qText = document.getElementById('qText').value.trim();
+      const o1 = document.getElementById('opt1').value.trim();
+      const o2 = document.getElementById('opt2').value.trim();
+      const o3 = document.getElementById('opt3').value.trim();
+      const o4 = document.getElementById('opt4').value.trim();
+      const c  = document.getElementById('correct').value;
+      const img = document.getElementById('imgUrl').value.trim();
+
+      if (!qText || !o1 || !o2 || !o3 || !o4 || !c){ alert('Enter question, 4 options & correct'); return; }
+      const correct = [o1,o2,o3,o4][Number(c)-1];
+
+      qs.push({ q: qText, options:[o1,o2,o3,o4], correct, ...(img?{img}: {}) });
+      localStorage.setItem('questions', JSON.stringify(qs));
+      renderQuestions();
+      // clear form
+      document.getElementById('qText').value='';
+      document.getElementById('opt1').value='';
+      document.getElementById('opt2').value='';
+      document.getElementById('opt3').value='';
+      document.getElementById('opt4').value='';
+      document.getElementById('correct').value='';
+      document.getElementById('imgUrl').value='';
+    }
+
+    function renderQuestions(){
+      const tb = document.getElementById('qTable'); tb.innerHTML='';
+      qs.forEach((q, i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${q.q}</td>
+          <td>${(q.options||[]).join(' | ')}</td>
+          <td>${q.correct}</td>
+          <td>${q.img ? `<a href="${q.img}" target="_blank">view</a>` : '-'}</td>
+          <td class="row-actions">
+            <button class="btn" onclick="editQuestion(${i})">Edit</button>
+            <button class="btn red" onclick="deleteQuestion(${i})">Delete</button>
+          </td>`;
+        tb.appendChild(tr);
       });
     }
 
-    function deleteQuestion(index) {
-      let questions = JSON.parse(localStorage.getItem("questions")) || [];
-      questions.splice(index, 1);
-      localStorage.setItem("questions", JSON.stringify(questions));
-      loadQuestions();
+    function editQuestion(i){
+      const q = qs[i];
+      const nq = prompt('Edit Question text:', q.q);
+      if (nq===null) return;
+      const o1 = prompt('Option 1:', q.options[0]); if (o1===null) return;
+      const o2 = prompt('Option 2:', q.options[1]); if (o2===null) return;
+      const o3 = prompt('Option 3:', q.options[2]); if (o3===null) return;
+      const o4 = prompt('Option 4:', q.options[3]); if (o4===null) return;
+      const nc = prompt('Correct option value (exact text):', q.correct); if (nc===null) return;
+      const ni = prompt('Image URL (blank to remove):', q.img || '');
+      qs[i] = { q: nq, options:[o1,o2,o3,o4], correct:nc, ...(ni?{img:ni}:{}) };
+      localStorage.setItem('questions', JSON.stringify(qs));
+      renderQuestions();
     }
 
-    // -------- Logout --------
-    function logout() {
-      alert("Logged out!");
-      window.location.href = "index.html";
+    function deleteQuestion(i){
+      if (!confirm('Delete this question?')) return;
+      qs.splice(i,1);
+      localStorage.setItem('questions', JSON.stringify(qs));
+      renderQuestions();
     }
 
-    // -------- On Page Load --------
-    window.onload = function () {
-      loadStudents();
-      loadQuestions();
-    };
+    function resetToDefault(){
+      if (!Array.isArray(defaultQuestions) || !defaultQuestions.length){
+        alert('questions.js not found or empty.');
+        return;
+      }
+      if (!confirm('Reset all questions to default from questions.js? This will overwrite current list.')) return;
+      qs = defaultQuestions;
+      localStorage.setItem('questions', JSON.stringify(qs));
+      renderQuestions();
+      alert('Questions reset to default (from questions.js).');
+    }
+
+    function exportQuestions(){
+      const blob = new Blob([JSON.stringify(qs,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'questions-export.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function logout(){ window.location.href = 'index.html'; }
+
+    // Initial render
+    renderStudents();
+    renderQuestions();
   </script>
 </body>
 </html>
