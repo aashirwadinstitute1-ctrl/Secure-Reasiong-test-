@@ -2,99 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Exam Panel</title>
+  <title>Secure Exam Panel</title>
   <style>
-    body { font-family: Arial; margin:0; padding:0; background:#f9fafb; }
-    header { background:#2563eb; color:#fff; padding:10px; text-align:center; }
-    .camera { position:fixed; top:10px; right:10px; border:2px solid #2563eb; width:150px; height:110px; }
-    .container { padding:20px; }
-    .question-box { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.2); margin-bottom:20px; }
-    .options label { display:block; margin:5px 0; padding:5px; border:1px solid #ccc; border-radius:5px; cursor:pointer; }
-    .nav { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
-    .nav button { width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; }
-    .nav .unsolved { background:#ef4444; color:white; }
-    .nav .solved { background:#22c55e; color:white; }
-    .timer { font-size:18px; font-weight:bold; color:#dc2626; margin-bottom:10px; }
-    .submit-btn { background:#2563eb; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; }
+    body { font-family: Arial; margin:0; background:#f9fafb; }
+    header { background:#2563eb; color:white; padding:10px; display:flex; justify-content:space-between; align-items:center; }
+    #camera { position:absolute; top:10px; right:10px; width:180px; height:130px; border:2px solid #2563eb; border-radius:8px; overflow:hidden; }
+    #timer { font-size:18px; font-weight:bold; }
+    .container { display:flex; padding:20px; }
+    #questionNumbers { width:150px; }
+    #questionNumbers button { width:40px; height:40px; margin:5px; border:none; border-radius:5px; background:#ef4444; color:white; font-weight:bold; cursor:pointer; }
+    #questionNumbers button.answered { background:#22c55e; }
+    #questionArea { flex:1; padding:20px; background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    .question { font-size:18px; margin-bottom:10px; }
+    .options label { display:block; margin:8px 0; }
+    button#nextBtn { margin-top:20px; padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:5px; cursor:pointer; }
+    button#submitBtn { margin-top:20px; padding:10px 20px; background:#16a34a; color:white; border:none; border-radius:5px; cursor:pointer; }
   </style>
 </head>
 <body>
   <header>
-    <h2>Welcome, <span id="studentName"></span> | Secure Exam</h2>
+    <div>Welcome, <span id="studentName"></span></div>
+    <div id="timer">40:00</div>
   </header>
 
-  <video id="camera" class="camera" autoplay muted></video>
+  <div id="camera">
+    <video id="webcam" autoplay muted></video>
+  </div>
 
   <div class="container">
-    <div class="timer">Time Left: <span id="time">40:00</span></div>
-    <div id="question-container" class="question-box"></div>
-    <div class="nav" id="question-nav"></div>
-    <br>
-    <button class="submit-btn" onclick="submitExam()">Submit Exam</button>
+    <div id="questionNumbers"></div>
+    <div id="questionArea">
+      <div class="question" id="questionText"></div>
+      <div class="options" id="options"></div>
+      <button id="nextBtn" onclick="nextQuestion()">Next</button>
+      <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
+    </div>
   </div>
 
   <script>
+    // ✅ Student Name from Login
+    document.getElementById("studentName").innerText = localStorage.getItem("studentName") || "Student";
+
+    // ✅ Questions (आपके 80 questions यहाँ डालने होंगे)
     const questions = [
-      { q: "Q1: Alphabet test sample?", options: ["A", "B", "C", "D"] },
-      { q: "Q2: Calendar sample?", options: ["Jan", "Feb", "Mar", "Apr"] },
-      { q: "Q3: Clock sample?", options: ["12", "3", "6", "9"] },
-      // 👉 यहाँ आपके सारे 80 questions डालने हैं
+      { q: "Q1. Example Question 1?", options: ["A", "B", "C", "D"], correct: "A" },
+      { q: "Q2. Example Question 2?", options: ["True", "False"], correct: "True" },
+      { q: "Q3. Example Question 3?", options: ["1", "2", "3", "4"], correct: "3" },
     ];
 
-    let current = 0;
-    let answers = Array(questions.length).fill(null);
+    let currentQ = 0;
+    let answers = {};
 
-    const name = localStorage.getItem("studentName") || "Student";
-    document.getElementById("studentName").innerText = name;
-
-    function loadQuestion(i) {
-      current = i;
-      const q = questions[i];
-      let html = `<h3>${q.q}</h3>`;
-      q.options.forEach((opt, idx) => {
-        html += `<label><input type="radio" name="q${i}" value="${opt}" onchange="saveAnswer(${i},'${opt}')"> ${opt}</label>`;
+    // ✅ Load Questions
+    function loadQuestions() {
+      let qNums = document.getElementById("questionNumbers");
+      qNums.innerHTML = "";
+      questions.forEach((_, i) => {
+        let btn = document.createElement("button");
+        btn.innerText = i + 1;
+        btn.id = "qBtn" + i;
+        btn.onclick = () => showQuestion(i);
+        qNums.appendChild(btn);
       });
-      document.getElementById("question-container").innerHTML = html;
-      renderNav();
+      showQuestion(0);
     }
 
-    function saveAnswer(i, ans) {
-      answers[i] = ans;
-      renderNav();
+    function showQuestion(index) {
+      currentQ = index;
+      let q = questions[index];
+      document.getElementById("questionText").innerText = q.q;
+      let opts = document.getElementById("options");
+      opts.innerHTML = "";
+      q.options.forEach(opt => {
+        let label = document.createElement("label");
+        label.innerHTML = `<input type="radio" name="option" value="${opt}" 
+          ${answers[index] === opt ? "checked" : ""} onchange="selectAnswer('${opt}')"> ${opt}`;
+        opts.appendChild(label);
+      });
     }
 
-    function renderNav() {
-      let navHtml = "";
-      for (let i = 0; i < questions.length; i++) {
-        let cls = answers[i] ? "solved" : "unsolved";
-        navHtml += `<button class="${cls}" onclick="loadQuestion(${i})">${i+1}</button>`;
+    function selectAnswer(ans) {
+      answers[currentQ] = ans;
+      document.getElementById("qBtn" + currentQ).classList.add("answered");
+    }
+
+    function nextQuestion() {
+      if (currentQ < questions.length - 1) {
+        showQuestion(currentQ + 1);
       }
-      document.getElementById("question-nav").innerHTML = navHtml;
     }
 
+    // ✅ Timer 40 Min
+    let timeLeft = 40 * 60;
+    let timer = setInterval(() => {
+      let min = Math.floor(timeLeft / 60);
+      let sec = timeLeft % 60;
+      document.getElementById("timer").innerText = `${min}:${sec < 10 ? "0"+sec : sec}`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        clearInterval(timer);
+        submitExam();
+      }
+    }, 1000);
+
+    // ✅ Submit Exam
     function submitExam() {
-      alert("✅ Exam submitted successfully!");
+      alert("Exam submitted! Thank you.");
       window.location.href = "index.html";
     }
 
-    // Timer
-    let totalTime = 40 * 60; 
-    const timerEl = document.getElementById("time");
-    setInterval(() => {
-      if (totalTime <= 0) { submitExam(); return; }
-      totalTime--;
-      let m = String(Math.floor(totalTime / 60)).padStart(2,'0');
-      let s = String(totalTime % 60).padStart(2,'0');
-      timerEl.textContent = `${m}:${s}`;
-    }, 1000);
+    // ✅ Camera Access
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      document.getElementById("webcam").srcObject = stream;
+    }).catch(err => {
+      console.error("Camera error: ", err);
+    });
 
-    // Camera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { document.getElementById("camera").srcObject = stream; })
-      .catch(err => console.log("Camera error:", err));
-
-    // Init
-    loadQuestion(0);
+    loadQuestions();
   </script>
 </body>
 </html>
