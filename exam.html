@@ -2,34 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Secure Online Exam</title>
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f4f4; }
-    header { background:#2563eb; color:#fff; padding:10px; text-align:center; font-size:20px; }
-    #cameraPreview { position:fixed; top:10px; right:10px; width:180px; height:130px; border:2px solid #2563eb; border-radius:8px; background:#000; }
-    #timer { font-size:18px; font-weight:bold; color:#d32f2f; text-align:center; margin:10px; }
-    #question-container { background:#fff; margin:20px auto; padding:20px; max-width:800px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); }
-    .question { font-size:18px; margin-bottom:15px; }
+    body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; }
+    header { background:#2563eb; color:white; padding:15px; text-align:center; font-size:24px; font-weight:bold; }
+    #timer { font-size:18px; text-align:right; padding:10px; margin-right:20px; color:#e63946; }
+    #question-container { margin:20px auto; padding:20px; width:80%; background:white; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .question { font-size:20px; margin-bottom:15px; }
     .options label { display:block; margin-bottom:8px; cursor:pointer; }
-    #navigation { display:flex; flex-wrap:wrap; margin:20px auto; max-width:800px; }
-    .nav-btn { width:40px; height:40px; margin:5px; border:none; border-radius:50%; font-weight:bold; cursor:pointer; }
-    .nav-btn.red { background:#e57373; color:#fff; }
-    .nav-btn.green { background:#81c784; color:#fff; }
     #controls { text-align:center; margin:20px; }
-    #controls button { background:#2563eb; color:#fff; border:none; padding:10px 16px; margin:0 5px; border-radius:8px; cursor:pointer; font-size:16px; }
-    #submitBtn { background:#2563eb; color:#fff; border:none; padding:12px 20px; margin:20px auto; display:block; border-radius:8px; cursor:pointer; font-size:18px; }
+    #controls button { background:#2563eb; color:#fff; border:none; padding:10px 16px; margin:5px; border-radius:6px; cursor:pointer; }
+    #submitBtn { background:#16a34a; color:#fff; border:none; padding:12px 20px; border-radius:8px; display:block; margin:20px auto; cursor:pointer; }
     #result { text-align:center; font-size:22px; margin:20px; font-weight:bold; color:#2563eb; }
+    img.question-img { display:block; margin:10px auto; max-width:250px; }
   </style>
 </head>
 <body>
   <header>Secure Online Exam</header>
-  
-  <div id="cameraPreview"></div>
   <div id="timer">Time Left: 40:00</div>
-  
+
   <div id="question-container">
     <div id="question" class="question"></div>
+    <img id="qImage" class="question-img" style="display:none;" />
     <div id="options" class="options"></div>
     <div id="controls">
       <button id="prevBtn" onclick="prevQuestion()">Previous</button>
@@ -37,121 +31,88 @@
     </div>
   </div>
 
-  <div id="navigation"></div>
-  <button id="submitBtn">Submit Exam</button>
+  <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
   <div id="result"></div>
 
   <script src="questions.js"></script>
   <script>
     let currentQuestion = 0;
     let answers = {};
-    let totalTime = 40 * 60; // 40 minutes
 
-    // Timer
-    function startTimer() {
-      let timerInterval = setInterval(() => {
-        let minutes = Math.floor(totalTime / 60);
-        let seconds = totalTime % 60;
-        document.getElementById("timer").innerText = 
-          "Time Left: " + minutes + ":" + (seconds < 10 ? "0"+seconds : seconds);
+    function loadQuestion(index) {
+      const q = questions[index];
+      document.getElementById("question").innerText = q.q;
 
-        if (totalTime <= 0) {
-          clearInterval(timerInterval);
-          submitExam();
-        }
-        totalTime--;
-      }, 1000);
-    }
+      // show image if exists
+      const imgEl = document.getElementById("qImage");
+      if (q.img) {
+        imgEl.src = q.img;
+        imgEl.style.display = "block";
+      } else {
+        imgEl.style.display = "none";
+      }
 
-    // Show Question
-    function showQuestion(index) {
-      let q = questions[index];
-      document.getElementById("question").innerText = (index+1) + ". " + q.q;
-      let opts = "";
+      // options
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
       q.options.forEach(opt => {
-        opts += `<label><input type="radio" name="option" value="${opt}" 
-          ${answers[index]===opt?"checked":""}> ${opt}</label>`;
+        const checked = answers[index] === opt ? "checked" : "";
+        optionsDiv.innerHTML += `
+          <label>
+            <input type="radio" name="q${index}" value="${opt}" ${checked} onclick="answers[${index}]='${opt}'"> ${opt}
+          </label>
+        `;
       });
-      document.getElementById("options").innerHTML = opts;
 
-      currentQuestion = index;
-      updateButtons();
+      // buttons enable/disable
+      document.getElementById("prevBtn").disabled = index === 0;
+      document.getElementById("nextBtn").disabled = index === questions.length - 1;
     }
 
-    // Navigation
-    function renderNavigation() {
-      let nav = "";
-      for (let i=0; i<questions.length; i++) {
-        nav += `<button class="nav-btn ${answers[i]?"green":"red"}" onclick="showQuestion(${i})">${i+1}</button>`;
-      }
-      document.getElementById("navigation").innerHTML = nav;
-    }
-
-    // Save Answer
-    document.getElementById("options").addEventListener("change", e => {
-      if (e.target.name === "option") {
-        answers[currentQuestion] = e.target.value;
-        renderNavigation();
-      }
-    });
-
-    // Next Question
     function nextQuestion() {
       if (currentQuestion < questions.length - 1) {
-        showQuestion(currentQuestion + 1);
+        currentQuestion++;
+        loadQuestion(currentQuestion);
       }
     }
 
-    // Previous Question
     function prevQuestion() {
       if (currentQuestion > 0) {
-        showQuestion(currentQuestion - 1);
+        currentQuestion--;
+        loadQuestion(currentQuestion);
       }
     }
 
-    // Update Button State
-    function updateButtons() {
-      document.getElementById("prevBtn").disabled = currentQuestion === 0;
-      document.getElementById("nextBtn").disabled = currentQuestion === questions.length - 1;
-    }
-
-    // Submit
     function submitExam() {
       let score = 0;
-      questions.forEach((q,i) => {
-        let correct = q.correct;
-        let given = answers[i] || "Not Attempted";
-        if (given === correct) score++;
+      questions.forEach((q, i) => {
+        if (answers[i] === q.correct) score++;
       });
 
-      // Hide exam interface
       document.getElementById("question-container").style.display = "none";
-      document.getElementById("navigation").style.display = "none";
       document.getElementById("submitBtn").style.display = "none";
-
-      // Show only score
-      document.getElementById("result").innerHTML = `<h2>Your Score: ${score} / ${questions.length}</h2>`;
+      document.getElementById("result").innerText =
+        `✅ Exam Completed! Your Score: ${score} / ${questions.length}`;
     }
-    document.getElementById("submitBtn").onclick = submitExam;
 
-    // Camera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        let video = document.createElement("video");
-        video.srcObject = stream;
-        video.play();
-        video.style.width="100%";
-        video.style.height="100%";
-        document.getElementById("cameraPreview").appendChild(video);
-      })
-      .catch(err => console.log("Camera error", err));
+    // Timer 40 minutes
+    let timeLeft = 40 * 60;
+    function updateTimer() {
+      let minutes = Math.floor(timeLeft / 60);
+      let seconds = timeLeft % 60;
+      document.getElementById("timer").innerText =
+        `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+      if (timeLeft <= 0) {
+        submitExam();
+      } else {
+        timeLeft--;
+        setTimeout(updateTimer, 1000);
+      }
+    }
 
-    // Init
-    window.onload = () => {
-      showQuestion(0);
-      renderNavigation();
-      startTimer();
-    };
+    // init
+    loadQuestion(currentQuestion);
+    updateTimer();
   </script>
 </body>
 </html>
