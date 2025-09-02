@@ -124,9 +124,9 @@
         return;
       }
 
-      let html = `<h3>Q${currentQuestion + 1}: ${q.question}</h3>`;
-      if (q.image) {
-        html += `<img src="${q.image}" class="question-img">`;
+      let html = `<h3>Q${currentQuestion + 1}: ${q.q || q.question}</h3>`;
+      if (q.img || q.image) {
+        html += `<img src="${q.img || q.image}" class="question-img">`;
       }
 
       html += `<div class="options">`;
@@ -178,7 +178,7 @@
     function submitExam() {
       score = 0;
       examQuestions.forEach((q, i) => {
-        if (userAnswers[i] == q.answer) {
+        if (userAnswers[i] == q.correct || userAnswers[i] == q.answer) {
           score++;
         }
       });
