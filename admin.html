@@ -6,11 +6,12 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h2 { color: #007bff; }
-    input, button { padding: 6px; margin: 5px; }
+    input, button, select { padding: 6px; margin: 5px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; }
     .logout { background: red; color: white; border: none; padding: 6px 12px; cursor: pointer; }
+    .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -18,31 +19,65 @@
   <h2>Admin Panel</h2>
   <button class="logout" onclick="logout()">Logout</button>
 
-  <h3>📋 Student Records</h3>
-  <input type="text" id="name" placeholder="Name">
-  <input type="text" id="id" placeholder="ID">
-  <input type="text" id="mobile" placeholder="Mobile">
-  <input type="file" id="photo">
-  <button onclick="addStudent()">Add Student</button>
+  <!-- ================= Student Section ================= -->
+  <div class="section">
+    <h3>📋 Student Records</h3>
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="id" placeholder="ID">
+    <input type="text" id="mobile" placeholder="Mobile">
+    <input type="file" id="photo">
+    <button onclick="addStudent()">Add Student</button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Photo</th>
-        <th>Name</th>
-        <th>ID</th>
-        <th>Mobile</th>
-        <th>Result</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="studentTable"></tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Photo</th>
+          <th>Name</th>
+          <th>ID</th>
+          <th>Mobile</th>
+          <th>Result</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+  </div>
+
+  <!-- ================= Question Section ================= -->
+  <div class="section">
+    <h3>❓ Manage Questions</h3>
+    <input type="text" id="qText" placeholder="Enter Question" style="width:60%">
+    <br>
+    <input type="text" id="opt1" placeholder="Option 1">
+    <input type="text" id="opt2" placeholder="Option 2">
+    <input type="text" id="opt3" placeholder="Option 3">
+    <input type="text" id="opt4" placeholder="Option 4">
+    <select id="correct">
+      <option value="">Correct Answer</option>
+      <option value="1">Option 1</option>
+      <option value="2">Option 2</option>
+      <option value="3">Option 3</option>
+      <option value="4">Option 4</option>
+    </select>
+    <button onclick="addQuestion()">Add Question</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Question</th>
+          <th>Options</th>
+          <th>Correct</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="qTable"></tbody>
+    </table>
+  </div>
 
 <script>
+  /* ================= Student Data ================= */
   let students = JSON.parse(localStorage.getItem("students")) || [];
 
-  // Add Student
   function addStudent() {
     const name = document.getElementById("name").value.trim();
     const id = document.getElementById("id").value.trim();
@@ -61,12 +96,11 @@
       students.push({ name, id, mobile, photo, result: "" });
       localStorage.setItem("students", JSON.stringify(students));
       displayStudents();
-      clearForm();
+      clearStudentForm();
     };
     reader.readAsDataURL(photoFile);
   }
 
-  // Display Students
   function displayStudents() {
     const table = document.getElementById("studentTable");
     table.innerHTML = "";
@@ -87,7 +121,6 @@
     });
   }
 
-  // Upload Result
   function uploadResult(index) {
     const res = prompt("Enter Result for " + students[index].name);
     if (res !== null) {
@@ -97,7 +130,6 @@
     }
   }
 
-  // Delete Student
   function deleteStudent(index) {
     if (confirm("Are you sure?")) {
       students.splice(index, 1);
@@ -106,21 +138,80 @@
     }
   }
 
-  // Clear form
-  function clearForm() {
+  function clearStudentForm() {
     document.getElementById("name").value = "";
     document.getElementById("id").value = "";
     document.getElementById("mobile").value = "";
     document.getElementById("photo").value = "";
   }
 
-  // Logout
-  function logout() {
-    window.location.href = "index.html"; // apna login page
+  /* ================= Question Data ================= */
+  let questions = JSON.parse(localStorage.getItem("questions")) || [];
+
+  function addQuestion() {
+    const qText = document.getElementById("qText").value.trim();
+    const opt1 = document.getElementById("opt1").value.trim();
+    const opt2 = document.getElementById("opt2").value.trim();
+    const opt3 = document.getElementById("opt3").value.trim();
+    const opt4 = document.getElementById("opt4").value.trim();
+    const correct = document.getElementById("correct").value;
+
+    if (!qText || !opt1 || !opt2 || !opt3 || !opt4 || !correct) {
+      alert("Please fill all fields and select correct answer");
+      return;
+    }
+
+    questions.push({
+      qText, 
+      options: [opt1, opt2, opt3, opt4],
+      correct
+    });
+
+    localStorage.setItem("questions", JSON.stringify(questions));
+    displayQuestions();
+    clearQForm();
   }
 
-  // Show data on load
+  function displayQuestions() {
+    const qTable = document.getElementById("qTable");
+    qTable.innerHTML = "";
+    questions.forEach((q, index) => {
+      qTable.innerHTML += `
+        <tr>
+          <td>${q.qText}</td>
+          <td>${q.options.join(", ")}</td>
+          <td>Option ${q.correct}</td>
+          <td><button onclick="deleteQuestion(${index})">Delete</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function deleteQuestion(index) {
+    if (confirm("Delete this question?")) {
+      questions.splice(index, 1);
+      localStorage.setItem("questions", JSON.stringify(questions));
+      displayQuestions();
+    }
+  }
+
+  function clearQForm() {
+    document.getElementById("qText").value = "";
+    document.getElementById("opt1").value = "";
+    document.getElementById("opt2").value = "";
+    document.getElementById("opt3").value = "";
+    document.getElementById("opt4").value = "";
+    document.getElementById("correct").value = "";
+  }
+
+  /* ================= Logout ================= */
+  function logout() {
+    window.location.href = "index.html";
+  }
+
+  /* ================= Initial Load ================= */
   displayStudents();
+  displayQuestions();
 </script>
 
 </body>
