@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure Exam - Student Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #2563eb; }
+    .login, .exam { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    label { font-weight: bold; }
+    input { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 5px; }
+    button { padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .question { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .timer { font-size: 18px; color: red; text-align: right; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>📝 Secure Exam</h1>
+
+  <!-- Login Section -->
+  <div class="login" id="loginBox">
+    <h2>Login</h2>
+    <label>Student ID</label>
+    <input type="text" id="studentId">
+    <label>Name</label>
+    <input type="text" id="studentName">
+    <label>Password</label>
+    <input type="password" id="studentPass">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Exam Section -->
+  <div class="exam" id="examBox" style="display:none;">
+    <div class="timer">⏳ Time Left: <span id="timeLeft">40:00</span></div>
+    <form id="examForm"></form>
+    <button onclick="submitExam()">Submit</button>
+  </div>
+
+  <script>
+    let studentId = "", studentName = "";
+    let timer;
+    let totalTime = 40 * 60; // 40 minutes in seconds
+
+    // Login Function
+    function login() {
+      const id = document.getElementById("studentId").value.trim();
+      const name = document.getElementById("studentName").value.trim();
+      const pass = document.getElementById("studentPass").value.trim();
+
+      // Example student login (आप चाहें तो admin panel से students भी add करा सकते हैं)
+      if(id === "Bhumika" && pass === "7347") {
+        studentId = id;
+        studentName = name;
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("examBox").style.display = "block";
+        loadQuestions();
+        startTimer();
+      } else {
+        alert("❌ Invalid ID or Password!");
+      }
+    }
+
+    // Timer Function
+    function startTimer() {
+      function updateTime() {
+        let minutes = Math.floor(totalTime / 60);
+        let seconds = totalTime % 60;
+        document.getElementById("timeLeft").innerText =
+          `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        if (totalTime <= 0) {
+          clearInterval(timer);
+          alert("⏳ Time's up! Submitting exam...");
+          submitExam();
+        }
+        totalTime--;
+      }
+      updateTime();
+      timer = setInterval(updateTime, 1000);
+    }
+
+    // Load Questions from localStorage
+    function loadQuestions() {
+      const questions = JSON.parse(localStorage.getItem("questions")) || [];
+      const form = document.getElementById("examForm");
+      form.innerHTML = "";
+
+      if(questions.length === 0) {
+        form.innerHTML = "<p>⚠️ No questions available. Contact admin.</p>";
+        return;
+      }
+
+      questions.forEach((q, index) => {
+        form.innerHTML += `
+          <div class="question">
+            <p><b>Q${index+1}:</b> ${q.text}</p>
+            <label><input type="radio" name="q${index}" value="A"> ${q.options.A}</label><br>
+            <label><input type="radio" name="q${index}" value="B"> ${q.options.B}</label><br>
+            <label><input type="radio" name="q${index}" value="C"> ${q.options.C}</label><br>
+            <label><input type="radio" name="q${index}" value="D"> ${q.options.D}</label>
+          </div>
+        `;
+      });
+    }
+
+    // Submit Exam
+    function submitExam() {
+      clearInterval(timer);
+      const questions = JSON.parse(localStorage.getItem("questions")) || [];
+      let score = 0;
+
+      questions.forEach((q, index) => {
+        const answer = document.querySelector(`input[name="q${index}"]:checked`);
+        if(answer && answer.value === q.correct) {
+          score++;
+        }
+      });
+
+      alert(`✅ Exam submitted!\nScore: ${score}/${questions.length}`);
+
+      // Save result
+      const results = JSON.parse(localStorage.getItem("examResults")) || [];
+      results.push({ id: studentId, name: studentName, score });
+      localStorage.setItem("examResults", JSON.stringify(results));
+
+      document.getElementById("examBox").innerHTML = `<h2>Exam Completed</h2><p>Your score: ${score}/${questions.length}</p>`;
+    }
+  </script>
+</body>
+</html>
