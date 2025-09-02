@@ -8,12 +8,20 @@
 </head>
 <body>
   <div class="container">
-    <h1>Reasoning Exam</h1>
-    
-    <!-- Timer -->
-    <div id="timer">Time: 00:00</div>
+    <h1>Secure Reasoning Exam</h1>
 
-    <!-- Questions -->
+    <!-- Timer -->
+    <div id="timer">Time Left: 40:00</div>
+
+    <!-- Camera Preview -->
+    <div id="camera-box">
+      <video id="camera" autoplay playsinline></video>
+    </div>
+
+    <!-- Question Navigator -->
+    <div id="navigator"></div>
+
+    <!-- Question Display -->
     <div id="exam-container">
       <h2 id="questionText"></h2>
       <div id="options"></div>
