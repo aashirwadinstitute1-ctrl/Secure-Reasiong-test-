@@ -5,81 +5,195 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Secure Online Exam</title>
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f4f4; }
-    header { background:#2563eb; color:#fff; padding:10px; text-align:center; font-size:20px; }
-    #cameraPreview { position:fixed; top:10px; right:10px; width:140px; height:130px; border:2px solid #2563eb; border-radius:10px; background:#000; }
-    #timer { font-size:18px; font-weight:bold; color:#d32f2f; text-align:center; margin:10px; }
-    #question-container { background:#fff; margin:20px auto; padding:20px; max-width:800px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
-    .question { font-size:18px; margin-bottom:15px; }
-    .options label { display:block; margin-bottom:8px; cursor:pointer; }
-    #controls { text-align:center; margin:20px; }
-    #controls button { background:#2563eb; color:#fff; border:none; padding:10px 16px; margin:0 5px; border-radius:8px; cursor:pointer; }
-    #submitBtn { background:#2563eb; color:#fff; border:none; padding:12px 20px; margin:20px auto; display:block; border-radius:8px; cursor:pointer; }
-    #result { text-align:center; font-size:20px; margin:20px; font-weight:bold; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #2563eb;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+    }
+    #cameraPreview {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 180px;
+      height: 130px;
+      border: 2px solid #2563eb;
+      border-radius: 6px;
+    }
+    #timer {
+      font-size: 18px;
+      font-weight: bold;
+      color: #d32f2f;
+      text-align: center;
+      margin: 10px;
+    }
+    #question-container {
+      background: #fff;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 800px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .question {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .options label {
+      display: block;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    #controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #1e4fc5;
+    }
+    #result {
+      text-align: center;
+      font-size: 20px;
+      margin: 20px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <header>Secure Online Exam</header>
 
-  <div id="cameraPreview"></div>
+  <!-- Camera Preview -->
+  <video id="cameraPreview" autoplay></video>
+
+  <!-- Timer -->
   <div id="timer">Time Left: 40:00</div>
 
+  <!-- Question Box -->
   <div id="question-container">
     <div id="question" class="question"></div>
     <div id="options" class="options"></div>
     <div id="controls">
       <button id="prevBtn" onclick="prevQuestion()">Previous</button>
       <button id="nextBtn" onclick="nextQuestion()">Next</button>
+      <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
     </div>
   </div>
 
-  <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
   <div id="result"></div>
 
+  <!-- Load Questions -->
   <script src="questions.js"></script>
-  <script>
-    let current = 0;
-    let answers = {};
 
-    function showQuestion(i) {
-      let q = questions[i];
-      document.getElementById("question").innerHTML = (i+1)+". "+q.question;
-      let opts = "";
-      q.options.forEach((opt,j)=>{
-        let checked = (answers[i] === opt) ? "checked" : "";
-        opts += `<label><input type="radio" name="q${i}" value="${opt}" ${checked}
-          onchange="answers[${i}]='${opt}'"> ${opt}</label>`;
+  <script>
+    let currentQuestion = 0;
+    let answers = [];
+    let timeLeft = 40 * 60; // 40 minutes
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const resultEl = document.getElementById("result");
+
+    function loadQuestion() {
+      const q = questions[currentQuestion];
+      questionEl.innerHTML = (currentQuestion + 1) + ". " + q.question;
+
+      // options show
+      optionsEl.innerHTML = "";
+      q.options.forEach((opt, index) => {
+        const optionHTML = `
+          <label>
+            <input type="radio" name="option" value="${opt}" 
+              ${answers[currentQuestion] === opt ? "checked" : ""}>
+            ${opt}
+          </label>`;
+        optionsEl.innerHTML += optionHTML;
       });
-      document.getElementById("options").innerHTML = opts;
+
+      // button enable/disable
+      document.getElementById("prevBtn").style.display = currentQuestion === 0 ? "none" : "inline-block";
+      document.getElementById("nextBtn").style.display = currentQuestion === questions.length - 1 ? "none" : "inline-block";
     }
 
     function nextQuestion() {
-      if (current < questions.length-1) {
-        current++;
-        showQuestion(current);
+      saveAnswer();
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        loadQuestion();
       }
     }
 
     function prevQuestion() {
-      if (current > 0) {
-        current--;
-        showQuestion(current);
+      saveAnswer();
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+      }
+    }
+
+    function saveAnswer() {
+      const selected = document.querySelector("input[name='option']:checked");
+      if (selected) {
+        answers[currentQuestion] = selected.value;
       }
     }
 
     function submitExam() {
+      saveAnswer();
       let score = 0;
-      questions.forEach((q,i)=>{
-        if (answers[i] === q.correct) score++;
+      questions.forEach((q, i) => {
+        if (answers[i] === q.correct) {
+          score++;
+        }
       });
-      document.getElementById("result").innerHTML =
-        `<h2>Exam Finished!</h2><h2>Your Score: ${score} / ${questions.length}</h2>`;
-      document.getElementById("question-container").style.display="none";
-      document.getElementById("submitBtn").style.display="none";
+      document.getElementById("question-container").style.display = "none";
+      resultEl.innerHTML = `✅ Your Score: ${score} / ${questions.length}`;
     }
 
-    // First question show
-    showQuestion(current);
+    // Timer function
+    function startTimer() {
+      const timerEl = document.getElementById("timer");
+      const interval = setInterval(() => {
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        timerEl.innerHTML = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        timeLeft--;
+
+        if (timeLeft < 0) {
+          clearInterval(interval);
+          submitExam();
+        }
+      }, 1000);
+    }
+
+    // Camera Start
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        document.getElementById("cameraPreview").srcObject = stream;
+      })
+      .catch(err => {
+        console.log("Camera not accessible", err);
+      });
+
+    // Load first question
+    loadQuestion();
+    startTimer();
   </script>
 </body>
 </html>
