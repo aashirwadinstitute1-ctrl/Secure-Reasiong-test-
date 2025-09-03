@@ -85,23 +85,21 @@
     <div id="score-container" class="hidden"></div>
   </div>
 
-  <!-- load your questions.js (must be in same folder) -->
+  <!-- Load questions -->
   <script src="questions.js"></script>
 
   <script>
-    // — safe guard if questions.js failed to load
-    if (typeof questions === 'undefined' || !Array.isArray(questions) || questions.length === 0) {
+    // safety check
+    if (!window.questions || !Array.isArray(questions) || questions.length === 0) {
       document.getElementById('question-text').innerText =
         'No questions found. Make sure questions.js is present and defines a "questions" array.';
-      console.error('questions is not defined or empty. Place questions.js alongside exam.html.');
-      throw new Error('questions not loaded');
+      throw new Error('questions.js missing or empty');
     }
 
-    // state
     let currentQuestion = 0;
     const total = questions.length;
-    const userAnswers = new Array(total).fill(null); // stores selected option index or null
-    let timeLeft = 40 * 60; // seconds
+    const userAnswers = new Array(total).fill(null);
+    let timeLeft = 40 * 60; // 40 minutes in seconds
 
     // Timer
     function startTimer() {
@@ -119,18 +117,18 @@
       }, 1000);
     }
 
-    // render current question
+    // Load Question
     function loadQuestion() {
       const q = questions[currentQuestion];
       document.getElementById('question-text').innerText = q.q || q.question || '—';
+
       const qImg = document.getElementById('question-image');
-      if (q.img || q.image) {
-        qImg.innerHTML = `<img src="${q.img || q.image}" alt="diagram">`;
+      if (q.img) {
+        qImg.innerHTML = `<img src="${q.img}" alt="diagram">`;
       } else {
         qImg.innerHTML = '';
       }
 
-      // options
       const opts = document.getElementById('options');
       opts.innerHTML = '';
       (q.options || []).forEach((opt, idx) => {
@@ -138,21 +136,16 @@
         btn.type = 'button';
         btn.className = 'option-btn';
         btn.innerText = opt;
-        // if user already selected, mark selected class
         if (userAnswers[currentQuestion] === idx) btn.classList.add('selected');
         btn.onclick = () => {
-          // save answer
           userAnswers[currentQuestion] = idx;
-          // update visual selected state
           Array.from(opts.children).forEach(c => c.classList.remove('selected'));
           btn.classList.add('selected');
-          // update nav colours
           renderQuestionNumbers();
         };
         opts.appendChild(btn);
       });
 
-      // controls visibility
       document.getElementById('prev-btn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
       document.getElementById('next-btn').style.display = currentQuestion < total - 1 ? 'inline-block' : 'none';
       document.getElementById('submit-btn').style.display = currentQuestion === total - 1 ? 'inline-block' : 'none';
@@ -160,56 +153,41 @@
       renderQuestionNumbers();
     }
 
-    // question numbers navigation
+    // Navigation Numbers
     function renderQuestionNumbers() {
       const container = document.getElementById('questionNumbers');
       container.innerHTML = '';
-      for (let i=0;i<total;i++) {
+      for (let i = 0; i < total; i++) {
         const span = document.createElement('span');
-        span.textContent = (i+1);
-        // attempted vs not attempted
+        span.textContent = i + 1;
         if (userAnswers[i] !== null) {
           span.classList.add('attempted');
-          span.setAttribute('data-tooltip','Attempted');
+          span.setAttribute('data-tooltip', 'Attempted');
         } else {
-          span.setAttribute('data-tooltip','Not Attempted');
+          span.setAttribute('data-tooltip', 'Not Attempted');
         }
-        // active highlight
         if (i === currentQuestion) span.classList.add('active');
-
-        span.onclick = () => {
-          currentQuestion = i;
-          loadQuestion();
-        };
+        span.onclick = () => { currentQuestion = i; loadQuestion(); };
         container.appendChild(span);
       }
     }
 
     function nextQuestion() {
-      if (currentQuestion < total - 1) {
-        currentQuestion++;
-        loadQuestion();
-      }
+      if (currentQuestion < total - 1) { currentQuestion++; loadQuestion(); }
     }
     function prevQuestion() {
-      if (currentQuestion > 0) {
-        currentQuestion--;
-        loadQuestion();
-      }
+      if (currentQuestion > 0) { currentQuestion--; loadQuestion(); }
     }
 
-    // submit and scoring
+    // Submit Exam
     function submitExam() {
-      // compute score now
       let score = 0;
-      for (let i=0;i<total;i++) {
+      for (let i = 0; i < total; i++) {
         const ansIndex = userAnswers[i];
         if (ansIndex !== null && questions[i].options[ansIndex] === questions[i].correct) {
           score++;
         }
       }
-
-      // hide question area, show score
       document.getElementById('question-area').classList.add('hidden');
       const sc = document.getElementById('score-container');
       sc.classList.remove('hidden');
@@ -217,10 +195,9 @@
                       <div style="margin-top:8px; font-size:20px; font-weight:700;">
                         Your Score: ${score} / ${total}
                       </div>`;
-      // keep nav visible so teacher/admin can see attempted status
     }
 
-    // start camera (will prompt user)
+    // Camera
     function startCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -228,7 +205,7 @@
         .catch(err => { console.warn('Camera blocked or not available', err); });
     }
 
-    // init
+    // Init
     window.addEventListener('load', () => {
       startCamera();
       startTimer();
