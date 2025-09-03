@@ -85,33 +85,34 @@
     <div id="score-container" class="hidden"></div>
   </div>
 
-  <!-- load your questions.js (must be in same folder) -->
+  <!-- load your questions.js -->
   <script src="questions.js"></script>
 
   <script>
-    // — safe guard if questions.js failed to load
-    if (typeof questions === 'undefined' || !Array.isArray(questions) || questions.length === 0) {
-      document.getElementById('question-text').innerText =
-        'No questions found. Make sure questions.js is present and defines a "questions" array.';
-      console.error('questions is not defined or empty. Place questions.js alongside exam.html.');
-      throw new Error('questions not loaded');
+    // Load questions from localStorage first, else fallback to questions.js
+    let questionsData = JSON.parse(localStorage.getItem('questions'));
+    if (!Array.isArray(questionsData) || !questionsData.length) {
+      if (typeof questions !== 'undefined' && Array.isArray(questions) && questions.length) {
+        questionsData = questions; // fallback
+      } else {
+        document.getElementById('question-text').innerText =
+          'No questions found. Make sure questions.js is present or localStorage has questions.';
+        console.error('No questions available.');
+        throw new Error('questions not loaded');
+      }
     }
 
-    // state
-    let currentQuestion = 0;
+    let questions = questionsData; // use this in all code
     const total = questions.length;
-    const userAnswers = new Array(total).fill(null); // stores selected option index or null
-    let timeLeft = 40 * 60; // seconds
+    const userAnswers = new Array(total).fill(null);
+    let currentQuestion = 0;
+    let timeLeft = 40 * 60;
 
     // Timer
     function startTimer() {
       const timerEl = document.getElementById('timer');
       const iv = setInterval(() => {
-        if (timeLeft <= 0) {
-          clearInterval(iv);
-          submitExam();
-          return;
-        }
+        if (timeLeft <= 0) { clearInterval(iv); submitExam(); return; }
         const m = Math.floor(timeLeft / 60);
         const s = timeLeft % 60;
         timerEl.innerText = `Time Left: ${m}:${s < 10 ? '0'+s : s}`;
@@ -119,18 +120,12 @@
       }, 1000);
     }
 
-    // render current question
     function loadQuestion() {
       const q = questions[currentQuestion];
       document.getElementById('question-text').innerText = q.q || q.question || '—';
       const qImg = document.getElementById('question-image');
-      if (q.img || q.image) {
-        qImg.innerHTML = `<img src="${q.img || q.image}" alt="diagram">`;
-      } else {
-        qImg.innerHTML = '';
-      }
+      qImg.innerHTML = (q.img || q.image) ? `<img src="${q.img || q.image}" alt="diagram">` : '';
 
-      // options
       const opts = document.getElementById('options');
       opts.innerHTML = '';
       (q.options || []).forEach((opt, idx) => {
@@ -155,74 +150,31 @@
       renderQuestionNumbers();
     }
 
-    // question numbers navigation
     function renderQuestionNumbers() {
       const container = document.getElementById('questionNumbers');
       container.innerHTML = '';
       for (let i=0;i<total;i++) {
         const span = document.createElement('span');
-        span.textContent = (i+1);
-        if (userAnswers[i] !== null) {
-          span.classList.add('attempted');
-          span.setAttribute('data-tooltip','Attempted');
-        } else {
-          span.setAttribute('data-tooltip','Not Attempted');
-        }
+        span.textContent = i+1;
+        if (userAnswers[i] !== null) { span.classList.add('attempted'); span.setAttribute('data-tooltip','Attempted'); }
+        else span.setAttribute('data-tooltip','Not Attempted');
         if (i === currentQuestion) span.classList.add('active');
-
-        span.onclick = () => {
-          currentQuestion = i;
-          loadQuestion();
-        };
+        span.onclick = () => { currentQuestion=i; loadQuestion(); };
         container.appendChild(span);
       }
     }
 
-    function nextQuestion() {
-      if (currentQuestion < total - 1) {
-        currentQuestion++;
-        loadQuestion();
-      }
-    }
-    function prevQuestion() {
-      if (currentQuestion > 0) {
-        currentQuestion--;
-        loadQuestion();
-      }
-    }
+    function nextQuestion() { if (currentQuestion < total-1){ currentQuestion++; loadQuestion(); } }
+    function prevQuestion() { if (currentQuestion >0){ currentQuestion--; loadQuestion(); } }
 
-    // submit and scoring
     function submitExam() {
-      let score = 0;
-      for (let i=0;i<total;i++) {
-        const ansIndex = userAnswers[i];
-        if (ansIndex !== null && questions[i].options[ansIndex] === questions[i].correct) {
-          score++;
-        }
+      let score=0;
+      for(let i=0;i<total;i++){
+        const ansIdx = userAnswers[i];
+        if(ansIdx!==null && questions[i].options[ansIdx]===questions[i].correct) score++;
       }
       document.getElementById('question-area').classList.add('hidden');
       const sc = document.getElementById('score-container');
       sc.classList.remove('hidden');
       sc.innerHTML = `<div>✅ Exam Submitted</div>
-                      <div style="margin-top:8px; font-size:20px; font-weight:700;">
-                        Your Score: ${score} / ${total}
-                      </div>`;
-    }
-
-    // start camera
-    function startCamera() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { document.getElementById('camera').srcObject = stream; })
-        .catch(err => { console.warn('Camera blocked or not available', err); });
-    }
-
-    // init
-    window.addEventListener('load', () => {
-      startCamera();
-      startTimer();
-      loadQuestion();
-    });
-  </script>
-</body>
-</html>
+                      <
