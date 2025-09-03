@@ -32,7 +32,13 @@
     }
     #question-image img {
       max-width: 100%;
-      margin: 10px 0;
+      max-height: 300px;
+      display: block;
+      margin: 15px auto;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 5px;
+      background: #fafafa;
     }
     .option-btn {
       display: block;
@@ -69,6 +75,7 @@
       font-weight: bold;
       color: #333;
     }
+
     /* Navigation Numbers */
     #questionNumbers {
       margin-top: 20px;
@@ -90,7 +97,7 @@
     #questionNumbers .active {
       border: 2px solid blue;
     }
-    /* Tooltip style */
+    /* Tooltip */
     #questionNumbers span::after {
       content: attr(data-tooltip);
       position: absolute;
