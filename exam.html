@@ -55,7 +55,7 @@
     .option-btn:hover {
       background: #dcdcdc;
     }
-    #next-btn, #submit-btn {
+    #prev-btn, #next-btn, #submit-btn {
       margin-top: 15px;
       padding: 10px 20px;
       font-size: 16px;
@@ -64,6 +64,10 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+    }
+    #prev-btn {
+      background: #ffc107;
+      color: #000;
     }
     #submit-btn {
       background: #007bff;
@@ -75,6 +79,48 @@
       font-weight: bold;
       color: #333;
     }
+
+    /* Navigation Numbers */
+    #questionNumbers {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #questionNumbers span {
+      display: inline-block;
+      margin: 3px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      background: red; /* default = not attempted */
+      color: white;
+      cursor: pointer;
+      position: relative;
+    }
+    #questionNumbers .attempted {
+      background: green !important;
+    }
+    #questionNumbers .active {
+      border: 2px solid blue;
+    }
+    /* Tooltip */
+    #questionNumbers span::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #questionNumbers span:hover::after {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -85,16 +131,18 @@
       <div id="question-text"></div>
       <div id="question-image"></div>
       <div id="options"></div>
+      <button id="prev-btn" onclick="prevQuestion()">Previous</button>
       <button id="next-btn" onclick="nextQuestion()">Next</button>
       <button id="submit-btn" onclick="submitExam()" style="display:none;">Submit</button>
     </div>
+    <div id="questionNumbers"></div>
     <div id="score-container"></div>
   </div>
 
   <script src="questions.js"></script>
   <script>
     let currentQuestion = 0;
-    let score = 0;
+    let userAnswers = Array(questions.length).fill(null);
 
     function loadQuestion() {
       const question = questions[currentQuestion];
@@ -110,25 +158,28 @@
       const optionsContainer = document.getElementById("options");
       optionsContainer.innerHTML = "";
 
-      question.options.forEach(option => {
+      question.options.forEach((option, i) => {
         const button = document.createElement("button");
         button.className = "option-btn";
         button.innerText = option;
-        button.onclick = () => checkAnswer(option, question.correct);
+        button.onclick = () => saveAnswer(i);
         optionsContainer.appendChild(button);
       });
 
+      // Buttons visibility control
+      document.getElementById("prev-btn").style.display =
+        currentQuestion > 0 ? "inline-block" : "none";
       document.getElementById("next-btn").style.display =
         currentQuestion < questions.length - 1 ? "inline-block" : "none";
       document.getElementById("submit-btn").style.display =
         currentQuestion === questions.length - 1 ? "inline-block" : "none";
+
+      renderQuestionNumbers();
     }
 
-    function checkAnswer(selected, correct) {
-      if (selected === correct) {
-        score++;
-      }
-      nextQuestion();
+    function saveAnswer(selected) {
+      userAnswers[currentQuestion] = selected;
+      renderQuestionNumbers();
     }
 
     function nextQuestion() {
@@ -138,11 +189,47 @@
       }
     }
 
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+      }
+    }
+
     function submitExam() {
+      let score = 0;
+      questions.forEach((q, i) => {
+        if (userAnswers[i] !== null && q.options[userAnswers[i]] === q.correct) {
+          score++;
+        }
+      });
       document.getElementById("question-container").style.display = "none";
       document.getElementById("score-container").style.display = "block";
       document.getElementById("score-container").innerText =
         `Your Score: ${score} / ${questions.length}`;
+    }
+
+    function renderQuestionNumbers() {
+      const container = document.getElementById("questionNumbers");
+      container.innerHTML = "";
+      userAnswers.forEach((ans, i) => {
+        const span = document.createElement("span");
+        span.textContent = i + 1;
+        if (ans !== null) {
+          span.classList.add("attempted");
+          span.setAttribute("data-tooltip", "Attempted");
+        } else {
+          span.setAttribute("data-tooltip", "Not Attempted");
+        }
+        if (i === currentQuestion) {
+          span.classList.add("active");
+        }
+        span.onclick = () => {
+          currentQuestion = i;
+          loadQuestion();
+        };
+        container.appendChild(span);
+      });
     }
 
     // Start Camera
