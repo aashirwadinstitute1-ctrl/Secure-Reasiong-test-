@@ -39,15 +39,6 @@
     #questionNumbers span.attempted { background:green !important; }
     #questionNumbers span.active { outline:3px solid rgba(0,123,255,0.25); }
 
-    /* tooltip */
-    #questionNumbers span::after {
-      content: attr(data-tooltip);
-      position:absolute; left:50%; transform:translateX(-50%); bottom:120%;
-      background:#333; color:#fff; padding:5px 8px; font-size:12px; border-radius:4px;
-      white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s;
-    }
-    #questionNumbers span:hover::after { opacity:1; }
-
     #score-container { text-align:center; font-size:18px; font-weight:700; margin-top:18px; color:#333; }
     .note { font-size:13px; color:#666; margin-top:8px; text-align:center; }
     .hidden { display:none !important; }
@@ -77,7 +68,7 @@
           <button id="submit-btn" onclick="submitExam()" style="display:none;">Submit</button>
         </div>
 
-        <div id="questionNumbers" aria-hidden="false"></div>
+        <div id="questionNumbers"></div>
         <div class="note">Green = Attempted • Red = Not attempted • Click number to jump</div>
       </div>
     </div>
@@ -85,25 +76,20 @@
     <div id="score-container" class="hidden"></div>
   </div>
 
-  <!-- load your questions.js (must be in same folder) -->
   <script src="questions.js"></script>
 
   <script>
-    // — safe guard if questions.js failed to load
     if (typeof questions === 'undefined' || !Array.isArray(questions) || questions.length === 0) {
       document.getElementById('question-text').innerText =
         'No questions found. Make sure questions.js is present and defines a "questions" array.';
-      console.error('questions is not defined or empty. Place questions.js alongside exam.html.');
       throw new Error('questions not loaded');
     }
 
-    // state
     let currentQuestion = 0;
     const total = questions.length;
-    const userAnswers = new Array(total).fill(null); // stores selected option index or null
-    let timeLeft = 40 * 60; // seconds
+    const userAnswers = new Array(total).fill(null);
+    let timeLeft = 40 * 60;
 
-    // Timer
     function startTimer() {
       const timerEl = document.getElementById('timer');
       const iv = setInterval(() => {
@@ -119,10 +105,10 @@
       }, 1000);
     }
 
-    // render current question
     function loadQuestion() {
       const q = questions[currentQuestion];
-      document.getElementById('question-text').innerText = q.q || q.question || '—';
+      document.getElementById('question-text').innerText =
+        `Q${currentQuestion + 1}. ${q.q || q.question || '—'}`;
       const qImg = document.getElementById('question-image');
       if (q.img || q.image) {
         qImg.innerHTML = `<img src="${q.img || q.image}" alt="diagram">`;
@@ -130,29 +116,25 @@
         qImg.innerHTML = '';
       }
 
-      // options
       const opts = document.getElementById('options');
       opts.innerHTML = '';
+      const letters = ['a','b','c','d','e','f'];
       (q.options || []).forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'option-btn';
-        btn.innerText = opt;
-        // if user already selected, mark selected class
+        // ✅ option text ke aage (a), (b) add
+        btn.innerText = `(${letters[idx]}) ${opt}`;
         if (userAnswers[currentQuestion] === idx) btn.classList.add('selected');
         btn.onclick = () => {
-          // save answer
           userAnswers[currentQuestion] = idx;
-          // update visual selected state
           Array.from(opts.children).forEach(c => c.classList.remove('selected'));
           btn.classList.add('selected');
-          // update nav colours
           renderQuestionNumbers();
         };
         opts.appendChild(btn);
       });
 
-      // controls visibility
       document.getElementById('prev-btn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
       document.getElementById('next-btn').style.display = currentQuestion < total - 1 ? 'inline-block' : 'none';
       document.getElementById('submit-btn').style.display = currentQuestion === total - 1 ? 'inline-block' : 'none';
@@ -160,23 +142,16 @@
       renderQuestionNumbers();
     }
 
-    // question numbers navigation
     function renderQuestionNumbers() {
       const container = document.getElementById('questionNumbers');
       container.innerHTML = '';
       for (let i=0;i<total;i++) {
         const span = document.createElement('span');
         span.textContent = (i+1);
-        // attempted vs not attempted
         if (userAnswers[i] !== null) {
           span.classList.add('attempted');
-          span.setAttribute('data-tooltip','Attempted');
-        } else {
-          span.setAttribute('data-tooltip','Not Attempted');
         }
-        // active highlight
         if (i === currentQuestion) span.classList.add('active');
-
         span.onclick = () => {
           currentQuestion = i;
           loadQuestion();
@@ -198,9 +173,7 @@
       }
     }
 
-    // submit and scoring
     function submitExam() {
-      // compute score now
       let score = 0;
       for (let i=0;i<total;i++) {
         const ansIndex = userAnswers[i];
@@ -208,8 +181,6 @@
           score++;
         }
       }
-
-      // hide question area, show score
       document.getElementById('question-area').classList.add('hidden');
       const sc = document.getElementById('score-container');
       sc.classList.remove('hidden');
@@ -217,10 +188,8 @@
                       <div style="margin-top:8px; font-size:20px; font-weight:700;">
                         Your Score: ${score} / ${total}
                       </div>`;
-      // keep nav visible so teacher/admin can see attempted status
     }
 
-    // start camera (will prompt user)
     function startCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -228,7 +197,6 @@
         .catch(err => { console.warn('Camera blocked or not available', err); });
     }
 
-    // init
     window.addEventListener('load', () => {
       startCamera();
       startTimer();
