@@ -107,7 +107,7 @@ const questions = [
     correct: 2
   },
 
-  // Dice (Q21–Q26)
+  // Part 5: Dice (Q21–Q26)
   {
     q: "If in a dice, 1 is opposite to 6, 2 is opposite to 4, then which number is opposite to 5?",
     options: ["1", "2", "3", "6"],
@@ -139,7 +139,7 @@ const questions = [
     correct: 0
   },
 
-  // Ranking Arrangement (Q27–Q33)
+  // Part 6: Ranking Arrangement (Q27–Q33)
   {
     q: "In a row of 50 students, A is 18th from the left. What is his position from the right?",
     options: ["31", "32", "33", "34"],
@@ -176,7 +176,7 @@ const questions = [
     correct: 1
   },
 
-  // Seating Arrangement (Q34–Q40)
+  // Part 7: Seating Arrangement (Q34–Q40)
   {
     q: "Five friends are sitting in a row. A is to the left of B, C is to the right of D but left of B. Who is in the middle?",
     options: ["A", "B", "C", "D"],
@@ -213,7 +213,7 @@ const questions = [
     correct: 0
   },
 
-  // Blood Relation (Q41–Q47)
+  // Part 8: Blood Relation (Q41–Q47)
   {
     q: "Pointing to a man, Sita said, “He is the son of my grandfather’s only son.” How is the man related to Sita?",
     options: ["Brother", "Cousin", "Uncle", "Father"],
@@ -250,7 +250,7 @@ const questions = [
     correct: 0
   },
 
-  // Venn Diagram (Q48–Q53)
+  // Part 9: Venn Diagram (Q48–Q53)
   {
     q: "Which of the following groups can be represented by three concentric circles?",
     options: ["Teacher, Doctor, Engineer", "Rose, Flower, Plant", "Men, Women, Children", "Pen, Pencil, Eraser"],
@@ -282,7 +282,7 @@ const questions = [
     correct: 1
   },
 
-  // Syllogism (Q54–Q60)
+  // Part 10: Syllogism (Q54–Q60)
   {
     q: "Statements: All cats are dogs. All dogs are animals. Conclusions: (1) All cats are animals. (2) All animals are cats.",
     options: ["Only 1 follows", "Only 2 follows", "Both follow", "Neither follows"],
@@ -319,7 +319,7 @@ const questions = [
     correct: 3
   },
 
-  // Dictionary & Word Arrangement (Q61–Q70)
+  // Part 11: Dictionary & Word Arrangement (Q61–Q70)
   {
     q: "Arrange the words in dictionary order: Zebra, Apple, Mango, Banana",
     options: ["Apple, Banana, Mango, Zebra", "Apple, Mango, Banana, Zebra", "Banana, Apple, Mango, Zebra", "Apple, Banana, Zebra, Mango"],
@@ -342,4 +342,4 @@ const questions = [
   },
   {
     q: "Arrange in dictionary order: Kite, King, Kitten, Kitchen",
-    options: ["King, Kite, Kitchen, Kitten", "King, Kitchen, Kite, Kitten", "King, Kite, Kitten, Kitchen", "Kite, King, Kit
+    options: ["King, Kite, Kitchen, Kitten", "King,
