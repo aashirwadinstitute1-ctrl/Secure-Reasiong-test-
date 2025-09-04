@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secure Online Exam</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
+    .exam-container { width:90%; max-width:900px; margin:20px auto; background:#fff;
+      padding:18px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    h2 { margin:0; color:#1976d2; }
+    #camera { width:140px; height:100px; background:#000; border:2px solid #ddd; border-radius:6px; }
+    #timer { color:#d32f2f; font-weight:700; text-align:center; margin:10px 0; }
+
+    #question-text { font-size:18px; margin:12px 0; min-height:44px; }
+
+    .option-btn {
+      display:block; width:100%; text-align:left; padding:10px 12px; margin:8px 0;
+      border-radius:6px; border:1px solid #ddd; background:#f7f7f7; cursor:pointer; font-size:15px;
+    }
+    .option-btn.selected { background:#cfe8ff; border-color:#7fb3ff; }
+
+    .controls { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+    .controls button {
+      padding:10px 18px; font-size:15px; border-radius:6px; border:none; cursor:pointer;
+    }
+    #prev-btn { background:#ffc107; color:#000; }
+    #next-btn { background:#1976d2; color:#fff; }
+    #submit-btn { background:#007bff; color:#fff; }
+
+    #questionNumbers { margin-top:18px; text-align:center; }
+    #questionNumbers span {
+      display:inline-block; margin:4px; padding:6px 10px; border-radius:6px;
+      background:red; color:#fff; cursor:pointer; position:relative; min-width:32px;
+    }
+    #questionNumbers span.attempted { background:green !important; }
+    #questionNumbers span.active { outline:3px solid rgba(0,123,255,0.25); }
+
+    #score-container { text-align:center; font-size:18px; font-weight:700; margin-top:18px; color:#333; }
+    .note { font-size:13px; color:#666; margin-top:8px; text-align:center; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="exam-container">
+    <header>
+      <h2>Secure Online Exam</h2>
+      <div style="text-align:right;">
+        <div id="timer">Time Left: 40:00</div>
+      </div>
+    </header>
+
+    <div style="display:flex; gap:12px; align-items:flex-start; margin-top:10px;">
+      <video id="camera" autoplay muted playsinline></video>
+      <div style="flex:1;">
+        <div id="question-area">
+          <div id="question-text">Loading question...</div>
+          <div id="options"></div>
+        </div>
+
+        <div class="controls" style="margin-top:12px;">
+          <button id="prev-btn" onclick="prevQuestion()">Previous</button>
+          <button id="next-btn" onclick="nextQuestion()">Next</button>
+          <button id="submit-btn" onclick="submitExam()" style="display:none;">Submit</button>
+        </div>
+
+        <div id="questionNumbers"></div>
+        <div class="note">Green = Attempted • Red = Not attempted • Click number to jump</div>
+      </div>
+    </div>
+
+    <div id="score-container" class="hidden"></div>
+  </div>
+
+  <!-- load your questions -->
+  <script src="questions.js"></script>
+
+  <script>
+    if (typeof questions === 'undefined' || !Array.isArray(questions) || questions.length === 0) {
+      document.getElementById('question-text').innerText =
+        'No questions found. Make sure questions.js is present and defines a "questions" array.';
+      throw new Error('questions not loaded');
+    }
+
+    let currentQuestion = 0;
+    const total = questions.length;
+    const userAnswers = new Array(total).fill(null);
+    let timeLeft = 40 * 60;
+
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      const iv = setInterval(() => {
+        if (timeLeft <= 0) {
+          clearInterval(iv);
+          submitExam();
+          return;
+        }
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.innerText = `Time Left: ${m}:${s < 10 ? '0'+s : s}`;
+        timeLeft--;
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById('question-text').innerText = q.q;
+      const opts = document.getElementById('options');
+      opts.innerHTML = '';
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        if (userAnswers[currentQuestion] === idx) btn.classList.add('selected');
+        btn.onclick = () => {
+          userAnswers[currentQuestion] = idx;
+          Array.from(opts.children).forEach(c => c.classList.remove('selected'));
+          btn.classList.add('selected');
+          renderQuestionNumbers();
+        };
+        opts.appendChild(btn);
+      });
+
+      document.getElementById('prev-btn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+      document.getElementById('next-btn').style.display = currentQuestion < total - 1 ? 'inline-block' : 'none';
+      document.getElementById('submit-btn').style.display = currentQuestion === total - 1 ? 'inline-block' : 'none';
+
+      renderQuestionNumbers();
+    }
+
+    function renderQuestionNumbers() {
+      const container = document.getElementById('questionNumbers');
+      container.innerHTML = '';
+      for (let i=0;i<total;i++) {
+        const span = document.createElement('span');
+        span.textContent = (i+1);
+        if (userAnswers[i] !== null) {
+          span.classList.add('attempted');
+        }
+        if (i === currentQuestion) span.classList.add('active');
+        span.onclick = () => {
+          currentQuestion = i;
+          loadQuestion();
+        };
+        container.appendChild(span);
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestion < total - 1) {
+        currentQuestion++;
+        loadQuestion();
+      }
+    }
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+      }
+    }
+
+    function submitExam() {
+      let score = 0;
+      for (let i=0;i<total;i++) {
+        const ansIndex = userAnswers[i];
+        if (ansIndex !== null && questions[i].options[ansIndex] === questions[i].correct) {
+          score++;
+        }
+      }
+      document.getElementById('question-area').classList.add('hidden');
+      const sc = document.getElementById('score-container');
+      sc.classList.remove('hidden');
+      sc.innerHTML = `<div>✅ Exam Submitted</div>
+                      <div style="margin-top:8px; font-size:20px; font-weight:700;">
+                        Your Score: ${score} / ${total}
+                      </div>`;
+    }
+
+    function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { document.getElementById('camera').srcObject = stream; })
+        .catch(err => { console.warn('Camera blocked or not available', err); });
+    }
+
+    window.addEventListener('load', () => {
+      startCamera();
+      startTimer();
+      loadQuestion();
+    });
+  </script>
+</body>
+  </html>
