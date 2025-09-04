@@ -1,4 +1,4 @@
-const questions = [
+window.questions = [
   // Part 1: Alphabet Test (Q1–Q6)
   {
     q: "If the letters of the word KNOWLEDGE are arranged alphabetically, which letter will be third from the left?",
